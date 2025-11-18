@@ -1,0 +1,21 @@
+@import "tailwindcss";
+@import "tailwindcss-primeui";
+@import "primeicons/primeicons.css";
+
+#app {
+    width: 100%;
+    height: 100vh;
+}
+
+.cl-rootBox {
+    width: 70% !important;
+}
+
+.cl-cardBox {
+    width: 100% !important;
+}
+
+.cl-rootBox , .cl-cardBox {
+    height: 100% !important;
+    justify-content: space-evenly;
+}
