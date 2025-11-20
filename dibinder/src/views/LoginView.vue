@@ -5,14 +5,25 @@ import {
   type FormResolverOptions,
   type FormSubmitEvent,
 } from '@primevue/forms';
-import { Button, Image, InputText, Message, Password } from 'primevue';
-import type { ErrorsForm, LoginInputValue } from '@/types';
+import {
+  Button,
+  Image,
+  InputText,
+  Message,
+  Password,
+  useToast,
+} from 'primevue';
+import type { ErrorCatch, ErrorsForm, LoginInputValue } from '@/types';
 import config from '@/config';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores';
 
 const router = useRouter();
 
 const initialValues = ref<LoginInputValue>();
+const toast = useToast();
+const authStore = useAuthStore();
+
 const isLoading = ref(false);
 
 const triggerButton = (path: string) => {
@@ -65,12 +76,45 @@ const submitForm = async (e: FormSubmitEvent) => {
     });
 
     const data = await response.json();
+
+    if (data?.error) {
+      return toast.add({
+        severity: 'error',
+        summary: 'Failed',
+        detail: data?.message,
+        life: 3000,
+      });
+    }
+    toast.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: 'Sign in success',
+      life: 3000,
+    });
     console.log(data);
+    authStore.setUser(
+      data?.id,
+      data?.token,
+      data?.name,
+      data?.photoUrl,
+      'local',
+    );
+    router.push('/dashboard');
   } catch (e) {
     console.error(e);
+    toast.add({
+      severity: 'error',
+      summary: 'Failed',
+      detail: `${(e as ErrorCatch)?.message}`,
+      life: 3000,
+    });
   } finally {
     isLoading.value = false;
   }
+};
+
+const signInWithGoogle = () => {
+  window.location.href = `${config.api_url}/api/auth/google`;
 };
 </script>
 <template>
@@ -151,6 +195,7 @@ const submitForm = async (e: FormSubmitEvent) => {
           class="!text-light !border-[#52525b] hover:!bg-gray-300/10"
           fluid
           outlined
+          @click="signInWithGoogle"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

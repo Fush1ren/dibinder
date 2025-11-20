@@ -8,6 +8,7 @@ export type ConfigData = {
     CLOUDINARY_API_KEY: string;
     CLOUDINARY_API_SECRET: string;
     MONGODB_URL: string;
+    DB_NAME: string;
     MONGODB_USERNAME: string;
     MONGODB_PASSWORD: string;
     SMTP_HOST: string;

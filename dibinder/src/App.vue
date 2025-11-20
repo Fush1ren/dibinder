@@ -1,16 +1,19 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router';
-import NavBar from './components/NavBar.vue';
 import { computed } from 'vue';
+import { useRoute } from 'vue-router';
+import Toast from 'primevue/toast';
+import NavBar from './components/NavBar.vue';
+import type { RouteMeta } from './types';
 
 const r = useRoute();
 
-const route = computed((): string => {
-  return r?.path;
+const meta = computed((): RouteMeta => {
+  return r?.meta;
 });
 </script>
 
 <template>
-  <NavBar v-if="route !== '/login' && route !== '/sign-up'" />
+  <NavBar v-if="meta?.useNavbar" />
   <router-view />
+  <Toast />
 </template>

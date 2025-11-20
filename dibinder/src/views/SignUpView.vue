@@ -5,19 +5,33 @@ import {
   type FormResolverOptions,
   type FormSubmitEvent,
 } from '@primevue/forms';
-import { Button, Image, InputText, Message, Password } from 'primevue';
-import type { ErrorsForm, LoginInputValue } from '@/types';
+import {
+  Button,
+  Image,
+  InputText,
+  Message,
+  Password,
+  useToast,
+} from 'primevue';
+import type { ErrorsForm, RegisterInputValue } from '@/types';
 import config from '@/config';
 import { useRouter } from 'vue-router';
+import { useOtpStore } from '@/stores';
 
 const router = useRouter();
+const toast = useToast();
+const otpStore = useOtpStore();
 
-const initialValues = ref<LoginInputValue>();
+const initialValues = ref<RegisterInputValue>();
 const isLoading = ref(false);
 
-const triggerButton = (path: string) => {
+const triggerButton = (path: string): void => {
   if (!path) return;
   router.push(path);
+};
+
+const signUpWithGoogle = (): void => {
+  window.location.href = `${config.api_url}/api/auth/google`;
 };
 
 const resolver = async (
@@ -74,19 +88,30 @@ const submitForm = async (e: FormSubmitEvent) => {
 
     if (!e?.valid) return;
 
-    const response = await fetch(`${config.api_url}/api/auth/signin`, {
+    const response = await fetch(`${config.api_url}/api/auth/signup`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        name: e?.states?.name?.value,
         email: e?.states?.email?.value,
         password: e?.states?.password?.value,
       }),
     });
 
     const data = await response.json();
+
+    toast.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: 'Check email for OTP verification',
+      life: 3000,
+    });
+
+    otpStore.forVerify(data.email, 'register');
     console.log(data);
+    router.push('/verify');
   } catch (e) {
     console.error(e);
   } finally {
@@ -208,6 +233,7 @@ const submitForm = async (e: FormSubmitEvent) => {
           class="!text-light !border-[#52525b] hover:!bg-gray-300/10"
           fluid
           outlined
+          @click="signUpWithGoogle"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -238,7 +264,7 @@ const submitForm = async (e: FormSubmitEvent) => {
               />
             </g>
           </svg>
-          <span class="p-button-label">Sign in with Google</span>
+          <span class="p-button-label">Sign up with Google</span>
         </Button>
       </div>
     </div>

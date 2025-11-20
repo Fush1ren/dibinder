@@ -12,7 +12,7 @@ import passport from "passport";
 
 const authRouter = Router();
 
-authRouter.post('/singup', async (req: SignUpRequestParam, res: Response) => {
+authRouter.post('/signup', async (req: SignUpRequestParam, res: Response) => {
     try {
         const { name, email, password } = req.body;
 

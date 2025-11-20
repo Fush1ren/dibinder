@@ -10,6 +10,7 @@ const config = {
     CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
     CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
     MONGODB_URL: process.env.MONGODB_URL,
+    DB_NAME: process.env.DB_NAME,
     MONGODB_USERNAME: process.env.MONGODB_USERNAME,
     MONGODB_PASSWORD: process.env.MONGODB_PASSWORD,
     SMTP_HOST: process.env.SMTP_HOST,
