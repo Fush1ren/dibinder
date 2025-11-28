@@ -91,7 +91,6 @@ const submitForm = async (e: FormSubmitEvent) => {
       detail: 'Sign in success',
       life: 3000,
     });
-    console.log(data);
     authStore.setUser(
       data?.id,
       data?.token,
@@ -99,7 +98,7 @@ const submitForm = async (e: FormSubmitEvent) => {
       data?.photoUrl,
       'local',
     );
-    router.push('/dashboard');
+    router.push('/binder/tasks/today');
   } catch (e) {
     console.error(e);
     toast.add({
@@ -122,9 +121,9 @@ const signInWithGoogle = () => {
     class="grid grid-cols-1 min-h-screen md:grid-cols-12 h-screen overflow-hidden"
   >
     <div
-      class="bg-primary flex flex-col gap-4 justify-center items-start px-5 md:px-20 py-5 col-span-1 w-full md:col-span-6 lg:col-span-5"
+      class="bg-[#2D274B] flex flex-col gap-4 justify-center items-start px-5 md:px-20 py-5 col-span-1 w-full md:col-span-6 lg:col-span-5"
     >
-      <h3 class="w-full text-light text-center font-bold text-xl">
+      <h3 class="w-full text-[#EAEFFE] text-center font-bold text-xl">
         Sign in to your account
       </h3>
 
@@ -177,7 +176,7 @@ const signInWithGoogle = () => {
           <Button
             type="submit"
             label="Sign in"
-            class="!bg-blue-500 !text-light hover:!bg-blue-400"
+            class="!bg-blue-500 !text-[#EAEFFE] hover:!bg-blue-400"
             fluid
           />
         </div>
@@ -185,14 +184,14 @@ const signInWithGoogle = () => {
       <a href="/reset-password" class="w-full">
         <Button
           label="Forgot password?"
-          class="!text-light hover:!bg-gray-300/10"
+          class="!text-[#EAEFFE] hover:!bg-gray-300/10"
           fluid
           text
         />
       </a>
       <div class="w-full flex flex-col gap-4 pt-6">
         <Button
-          class="!text-light !border-[#52525b] hover:!bg-gray-300/10"
+          class="!text-[#EAEFFE] !border-[#52525b] hover:!bg-gray-300/10"
           fluid
           outlined
           @click="signInWithGoogle"
@@ -231,7 +230,7 @@ const signInWithGoogle = () => {
         <a @click="triggerButton('/sign-up')" class="w-full">
           <Button
             label="Create new account"
-            class="!text-light !border-blue-400 hover:!bg-gray-300/10"
+            class="!text-[#EAEFFE] !border-blue-400 hover:!bg-gray-300/10"
             fluid
             text
           />

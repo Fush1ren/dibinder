@@ -6,7 +6,7 @@ export const checkValueIsNotEmpty = (res: Response, data: string[] | number[]) =
     if (missingData?.length > 0) {
         return res.status(400).json({
             error: true,
-            message: `${missingData?.join(', ')} cannot be empty!`
+            message: `Data cannot be empty!`
         });
     }
 }

@@ -22,13 +22,15 @@ export type ErrorCatch = {
     stack?: string;
 }
 
-export type OtpFormProps = {
-    email: string;
-    reason: string;
+export type BinderViewProps = {
+    username: string;
+    routeName: string;
 }
 
-export interface OtpInput {
-    otp: string;
+export type SideBarTaskList = {
+    name: string;
+    link: string;
+    isActive: boolean;
 }
 
 export interface RegisterInputValue {
@@ -45,4 +47,40 @@ export interface DecodedToken {
     photoUrl?: string;
     iat: number;
     exp: number;
+}
+
+export interface ResponseAPI<T> {
+    error: boolean;
+    message: string;
+    data: T;
+}
+
+export interface ListResponse {
+    _id: string;
+    name: string;
+    color: string;
+    user: string;
+    task: TasksResponse[];
+    createdAt: Date | string;
+    updatedAt: Date | string;
+}
+
+export interface TasksResponse {
+    _id: string;
+    name: string;
+    description: string;
+    done: boolean;
+    list?: string;
+    startDate: Date | string;
+    dueDate: Date | string;
+    subTask: {
+        name: string;
+        done: boolean;
+    }[]
+    user: string;
+}
+
+export type ButtonColorProps = {
+    id: string;
+    listColor: string;
 }

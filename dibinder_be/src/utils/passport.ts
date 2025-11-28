@@ -1,12 +1,11 @@
 import passport from 'passport';
 import { Strategy as Auth0Strategy } from "passport-auth0";
-import dotenv from "dotenv";
-dotenv.config();
+import config from '../config';
 
-const domain = process.env.AUTH_DOMAIN!;
-const clientID = process.env.AUTH_CLIENT_ID!;
-const clientSecret = process.env.AUTH_CLIENT_SECRET!;
-const callbackURL = process.env.AUTH_CALLBACK_URL!;
+const domain = config.AUTH0_DOMAIN!;
+const clientID = config.AUTH0_CLIENT_ID!;
+const clientSecret = config.AUTH0_CLIENT_SECRET!;
+const callbackURL = config.AUTH0_CALLBACK_URL!;
 
 passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((user: any, done) => done(null, user));

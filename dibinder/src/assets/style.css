@@ -3,9 +3,18 @@
 @import "primeicons/primeicons.css";
 
 @theme {
-    --color-primary: #2D274B;
-    --color-secondary: #9787f3;
+    --color-primary: #AEA9B4;
+    --color-secondary: #CAC4D0;
     --color-light: #EAEFFE;
+    --color-dark: #01112B;
+    /* --color-primary: #2D274B;
+    --color-secondary: #9787f3;
+    --color-light: #EAEFFE; */
+    /* D0BCFE
+    4A4458 
+    EADDFF
+    CAC4D0
+    */
 }
 
 * {

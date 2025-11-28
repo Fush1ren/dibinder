@@ -31,16 +31,6 @@ export type UserSchema = {
     photoUrl: string | null;
 }
 
-export type OtpSchema = {
-    email: string;
-    otp: string;
-    user: {
-        name: string;
-        password: string;
-    },
-    createdAt: Date;
-}
-
 export type UploadParams = Request & {
     cloudinary: UploadApiResponse;
 }
@@ -67,18 +57,6 @@ export type SignUpRequestParam = Omit<Request, 'body'> & {
     }
 }
 
-export type VerifyOtpRequestParam = Omit<Request, 'body'> & {
-    body: {
-        email: string;
-        otp: string;
-    }
-}
-
-export type ResendOtpRequestParam = Omit<Request, 'body'> & {
-    body: {
-        email: string;
-    }
-}
 
 export type ChangePasswordRequestParam = Omit<Request, 'body'> & {
     body: {
@@ -102,4 +80,24 @@ export type User = {
     name: string;
     email: string;
     photoUrl: string | null;
+}
+
+export type Lists = {
+    name: string;
+    color: string;
+    user: string;
+}
+
+export type Task = {
+    name: string;
+    description: string;
+    done: boolean;
+    list?: string;
+    startDate: Date | string;
+    dueDate: Date | string;
+    subTask: {
+        name: string;
+        done: boolean;
+    }[]
+    user: string;
 }

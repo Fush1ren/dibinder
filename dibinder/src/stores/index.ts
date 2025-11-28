@@ -1,24 +1,8 @@
+import type { ListResponse, ResponseAPI } from "@/types";
 import { api } from "@/utils/axios";
+import type { AxiosResponse } from "axios";
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
-
-export const useOtpStore = defineStore('otp', () => {
-    const email = ref<string | null>();
-    const reason = ref<string | null>();
-    const countdown = ref<number>(0);
-
-    function forVerify(emailValue: string, reasonValue: string) {
-        email.value = emailValue;
-        reason.value = reasonValue;
-    }
-
-     return {
-        email,
-        reason,
-        countdown,
-        forVerify,
-    };
-});
 
 export const useAuthStore = defineStore('auth', () => {
     const userId = ref<string | null>();
@@ -90,5 +74,36 @@ export const useAuthStore = defineStore('auth', () => {
     persist: {
         key: 'authUser',
         storage: localStorage,
+    },
+});
+
+export const useListStore = defineStore('list', () => {
+  const lists = ref<ListResponse[]>();
+  const listActive = ref<string>();
+
+  function setListActive(id: string) {
+    listActive.value = id;
+  }
+
+  function clearList() {
+    listActive.value = undefined;
+  }
+
+  async function getList(): Promise<void> {
+    const { data }  = await api.get('/list') as AxiosResponse<ResponseAPI<ListResponse[]>>;
+    lists.value = data.data;
+  }
+
+  return {
+    lists,
+    listActive,
+    getList,
+    setListActive,
+    clearList,
+  }
+}, {
+    persist: {
+      key: "list",
+      storage: localStorage,
     },
 });
