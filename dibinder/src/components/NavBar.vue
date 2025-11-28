@@ -13,7 +13,7 @@ const moveRoute = (str: string): void => {
   <header class="absolute z-[50] w-full bg-primary/70">
     <div class="p-4 flex justify-between">
       <div class="flex justify-center items-center">
-        <span class="font-lovelo font-black text-xl text-light uppercase">
+        <span class="font-lovelo font-black text-xl text-dark uppercase">
           Dibinder
         </span>
       </div>
@@ -22,13 +22,13 @@ const moveRoute = (str: string): void => {
           @click="moveRoute('/login')"
           class="!bg-transparent !border-none"
         >
-          <span class="text-light">Login</span>
+          <span class="text-dark">Login</span>
         </Button>
         <Button
           @click="moveRoute('/sign-up')"
           class="!bg-transparent !border-none"
         >
-          <span class="text-light">Register</span>
+          <span class="text-dark">Register</span>
         </Button>
       </div>
     </div>

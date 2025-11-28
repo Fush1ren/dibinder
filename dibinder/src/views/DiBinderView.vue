@@ -6,7 +6,7 @@ const userName = authStore.userName;
 </script>
 
 <template>
-  <div>
+  <div class="w-full h-screen bg-primary text-dark">
     {{ userName }}
   </div>
 </template>

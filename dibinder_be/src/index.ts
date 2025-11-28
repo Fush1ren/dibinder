@@ -6,6 +6,8 @@ import authRouter from './routes/auth';
 import passportConfig from './config/passport';
 import { connectDB } from './config/db';
 import userRouter from './routes/user';
+import listRouter from './routes/list';
+import taskRouter from './routes/task';
 
 connectDB();
 
@@ -33,6 +35,8 @@ app.get("/", (_req, res) => {
 
 app.use('/api/auth', authRouter);
 app.use('/api/user', userRouter);
+app.use('/api/list', listRouter);
+app.use('/api/task', taskRouter);
 
 app.listen(3000, () => {
     console.log(`Back-End listening on port ${3000}`);

@@ -33,7 +33,7 @@ onMounted(() => {
         life: 3000,
       });
 
-      router.push('/dashboard');
+      router.push('/binder');
     } catch (e) {
       console.error('Invalid token:', e);
       toast.add({

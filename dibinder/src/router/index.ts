@@ -11,13 +11,31 @@ const routes: Readonly<RouteRecordRaw[]> = [
         }
     },
     {
-        path: '/dashboard',
-        name: 'dashboard',
-        component: () => import('@/views/DashboardView.vue'),
+        path: '/binder',
+        name: 'binder',
+        component: () => import('@/layouts/BinderLayout.vue'),
         meta: {
-            title: "Dashboard",
             requireAuth: true,
         },
+        children: [
+            {
+                path: 'tasks',
+                name: 'tasks',
+                component: () => import('@/layouts/TasksLayout.vue'),
+                children: [
+                    {
+                        path: 'today',
+                        name: 'taskToday',
+                        component: () => import('@/views/task/TaskTodayView.vue'),
+                    }
+                ]
+            },
+            {
+                path: 'today',
+                name: 'today',
+                component: () => import('@/views/TodayBinderView.vue'),
+            }
+        ],
     },
     {
         path: '/login',
@@ -33,14 +51,6 @@ const routes: Readonly<RouteRecordRaw[]> = [
         component: () => import('@/views/SignUpView.vue'),
         meta: { 
             title: 'Sign up' 
-        }
-    },
-    {
-        path: '/verify',
-        name: 'verify',
-        component: () => import('@/views/VerifyOtpView.vue'),
-        meta: {
-            title: 'Verify'
         }
     },
     {
@@ -73,7 +83,7 @@ router.beforeEach((to, _from, next) => {
         (to.name === "login" || to.name === "signup") &&
         isAuthenticated
     ) {
-        next({ name: "dashboard" });
+        next({ name: "taskToday" });
     } else {
         next();
     }

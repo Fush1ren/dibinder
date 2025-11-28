@@ -26,6 +26,6 @@ userSchema.index({
     email: 'text'
 });
 
-const Users = model('Users', userSchema);
+const Users = model('users', userSchema);
 
 export default Users;

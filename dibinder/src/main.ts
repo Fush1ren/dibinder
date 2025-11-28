@@ -3,6 +3,7 @@ import { createPinia } from 'pinia';
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import PrimeVue from 'primevue/config';
 import ToastService from 'primevue/toastservice';
+import KeyFilter from 'primevue/keyfilter';
 import App from './App.vue';
 import Aura from '@primeuix/themes/aura';
 import router from './router';
@@ -17,6 +18,7 @@ app.use(PrimeVue, {
     }
 });
 
+app.directive('keyfilter', KeyFilter);
 app.use(pinia);
 pinia.use(piniaPluginPersistedstate);
 app.use(router);

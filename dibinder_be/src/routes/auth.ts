@@ -1,13 +1,11 @@
 import { NextFunction, Request, Response, Router } from "express";
-import { ErrorCatch, InfoPassport, OtpSchema, ResendOtpRequestParam, SignUpRequestParam, User, VerifyOtpRequestParam } from "../types";
-import { sendVerificationEmail } from "../config/email";
+import { ErrorCatch, InfoPassport, SignUpRequestParam, User } from "../types";
 import { checkValueIsNotEmpty } from "../utils/data";
 import { sessionMiddleware } from "../config/session";
 import bcrypt from "bcryptjs";
 import config from "../config";
 import jwt from "jsonwebtoken";
 import Users from "../schema/users";
-import Otp from "../schema/otp";
 import passport from "passport";
 
 const authRouter = Router();
@@ -31,29 +29,18 @@ authRouter.post('/signup', async (req: SignUpRequestParam, res: Response) => {
             });
         }
 
-        await Otp.deleteOne({
-            email: lowerCasedEmail
-        });
-
-         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const newOtpEntry = new Otp({
-            email: lowerCasedEmail,
-            otp,
-            user: {
-                name,
-                password: hashedPassword
-            }
+        const newUser = new Users({
+            name,
+            email,
+            password: hashedPassword,
         });
 
-        await newOtpEntry.save();
-
-        await sendVerificationEmail(lowerCasedEmail, otp);
+        await newUser.save();
 
         res.status(200).json({
-            message: 'Verification code send to your email. Please verifiy to complete registration.',
+            message: 'User registered successfully. You can now sign in.',
             data: {
                 email: lowerCasedEmail,
             },
@@ -62,55 +49,9 @@ authRouter.post('/signup', async (req: SignUpRequestParam, res: Response) => {
         console.error(e);
         res.status(500).json({
             error: true,
-            message: "Failed to send verification email." + (e as ErrorCatch)?.message 
+            message: "Failed to register user." + (e as ErrorCatch)?.message 
         });
     };
-});
-
-authRouter.post('/verify-otp', async (req: VerifyOtpRequestParam, res: Response) => {
-    try {
-        const { email, otp } = req.body;
-
-        checkValueIsNotEmpty(res, [email, otp]);
-
-        const lowercasedEmail = email.toLowerCase();
-
-        const otpEntry = await Otp.findOne({ email: lowercasedEmail }) as OtpSchema;
-
-        if (!otpEntry) {
-            return res.status(400).json({
-                error: true,
-                message: "Invalid or expired OTP. Please try signing up again.",
-            });
-        }
-
-        if (otpEntry.otp !== otp) {
-            return res.status(400).json({ 
-                error: true,
-                message: "Invalid OTP code." 
-            });
-        }
-
-        const newUser = new Users({
-            name: otpEntry.user?.name,
-            email: otpEntry.email,
-            password: otpEntry.user.password,
-        });
-
-        await newUser.save();
-
-        await Otp.deleteOne({ email: lowercasedEmail });
-
-        res.status(200).json({
-            message: 'User registered successfully. You can now sign in.'
-        });
-    } catch (e) {
-        console.error("OTP Verification error:", e);
-        res.status(500).json({ 
-            error: true, 
-            message: (e as ErrorCatch)?.message 
-        });
-    }
 });
 
 authRouter.post("/signin", (req: Request, res: Response, next: NextFunction) => {
@@ -199,38 +140,5 @@ authRouter.get("/logout", sessionMiddleware, (req, res, next: NextFunction) => {
         res.redirect(logoutURL.toString());
     });
 });
-
-authRouter.post("/resend-otp", async (req: ResendOtpRequestParam, res) => {
-    try {
-        const { email } = req.body;
-        const lowercasedEmail = email.toLowerCase();
-
-        const otpEntry = await Otp.findOne({ email: lowercasedEmail });
-
-        if (!otpEntry) {
-            return res.status(404).json({
-                error: true,
-                message:
-                "No pending registration found for this email. Please sign up first.",
-            });
-        }
-
-        const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
-        otpEntry.otp = newOtp;
-        otpEntry.createdAt = new Date();
-        await otpEntry.save();
-
-        await sendVerificationEmail(lowercasedEmail, newOtp);
-
-        res.status(200).json({
-            message: "A new verification code has been sent to your email.",
-        });
-    } catch (e) {
-        res.status(500).json({ 
-            error: true,
-            message: "Failed to resend OTP. " + (e as ErrorCatch)?.message 
-        });
-    }
-})
 
 export default authRouter;

@@ -4,7 +4,7 @@ import config from "@/config";
 import router from "@/router";
 
 export const api = axios.create({
-    baseURL: config.api_url,
+    baseURL: `${config.api_url}/api`,
     withCredentials: true,
 });
 

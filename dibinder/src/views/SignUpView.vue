@@ -16,11 +16,9 @@ import {
 import type { ErrorsForm, RegisterInputValue } from '@/types';
 import config from '@/config';
 import { useRouter } from 'vue-router';
-import { useOtpStore } from '@/stores';
 
 const router = useRouter();
 const toast = useToast();
-const otpStore = useOtpStore();
 
 const initialValues = ref<RegisterInputValue>();
 const isLoading = ref(false);
@@ -102,18 +100,30 @@ const submitForm = async (e: FormSubmitEvent) => {
 
     const data = await response.json();
 
+    if (data?.error) {
+      return toast.add({
+        severity: 'error',
+        summary: 'Failed',
+        detail: data?.message,
+        life: 3000,
+      });
+    }
+
     toast.add({
       severity: 'success',
       summary: 'Success',
-      detail: 'Check email for OTP verification',
+      detail: data?.message,
       life: 3000,
     });
-
-    otpStore.forVerify(data.email, 'register');
-    console.log(data);
-    router.push('/verify');
+    router.push('/login');
   } catch (e) {
     console.error(e);
+    toast.add({
+      severity: 'error',
+      summary: 'Failed',
+      detail: (e as Error)?.message,
+      life: 3000,
+    });
   } finally {
     isLoading.value = false;
   }
@@ -122,13 +132,13 @@ const submitForm = async (e: FormSubmitEvent) => {
 <template>
   <div class="grid grid-cols-1 h-screen md:grid-cols-12 overflow-hidden">
     <div
-      class="bg-primary flex flex-col gap-4 justify-center items-start px-5 md:px-20 py-10 col-span-1 w-full md:col-span-6 lg:col-span-5 overflow-y-auto"
+      class="bg-[#2D274B] flex flex-col gap-4 justify-center items-start px-5 md:px-20 py-10 col-span-1 w-full md:col-span-6 lg:col-span-5 overflow-y-auto"
     >
-      <h3 class="w-full text-light text-center font-bold text-xl">
+      <h3 class="w-full text-[#EAEFFE] text-center font-bold text-xl">
         Sign up for DiBinder
       </h3>
 
-      <span class="w-full text-light text-center text-sm"
+      <span class="w-full text-[#EAEFFE] text-center text-sm"
         >Have an Account?
         <a
           @click="triggerButton('/login')"
@@ -223,14 +233,14 @@ const submitForm = async (e: FormSubmitEvent) => {
           <Button
             type="submit"
             label="Sign up"
-            class="!bg-blue-500 !text-light hover:!bg-blue-400"
+            class="!bg-blue-500 !text-[#EAEFFE] hover:!bg-blue-400"
             fluid
           />
         </div>
       </Form>
       <div class="w-full flex flex-col gap-4 pt-6">
         <Button
-          class="!text-light !border-[#52525b] hover:!bg-gray-300/10"
+          class="!text-[#EAEFFE] !border-[#52525b] hover:!bg-gray-300/10"
           fluid
           outlined
           @click="signUpWithGoogle"
