@@ -93,11 +93,15 @@ export type Task = {
     description: string;
     done: boolean;
     list?: string;
-    startDate: Date | string;
     dueDate: Date | string;
     subTask: {
         name: string;
         done: boolean;
     }[]
     user: string;
+}
+
+export type GetTaskQueryParams = {
+    [key: string]: any;
+    createdAt: string[];
 }

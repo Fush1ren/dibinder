@@ -1,4 +1,4 @@
-import type { ListResponse, ResponseAPI } from "@/types";
+import type { ListResponse , ResponseAPI, TasksResponse } from "@/types";
 import { api } from "@/utils/axios";
 import type { AxiosResponse } from "axios";
 import { defineStore } from "pinia";
@@ -107,3 +107,31 @@ export const useListStore = defineStore('list', () => {
       storage: localStorage,
     },
 });
+
+export const useTaskStore = defineStore('task', () => {
+  const tasks = ref<TasksResponse[]>();
+
+  async function getTasks(params?: any){
+    const { data } = await api.get('/task', { params }) as AxiosResponse<ResponseAPI<TasksResponse[]>>;
+
+    tasks.value = data.data;
+  }
+
+  return {
+    tasks,
+    getTasks,
+  }
+});
+
+export const useSideBarStore = defineStore('sideBar', () => {
+  const isOpen = ref<boolean>(true);
+
+  function triggerSideBar(){
+    isOpen.value = !isOpen.value;
+  }
+
+  return {
+    isOpen,
+    triggerSideBar,
+  }
+})
