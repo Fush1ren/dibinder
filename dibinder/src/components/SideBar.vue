@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useListStore } from '@/stores';
+import { useListStore, useSideBarStore } from '@/stores';
 import type { ListResponse, BinderViewProps, SideBarTaskList } from '@/types';
 import { api } from '@/utils/axios';
 import {
@@ -14,13 +14,18 @@ import {
 import { onMounted, ref, shallowRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import ButtonColor from './ButtonColor.vue';
+import getElementStyle from '@/utils/styling';
 
 const route = useRoute();
 const router = useRouter();
 const toast = useToast();
 const listStore = useListStore();
+const sideBarStore = useSideBarStore();
 const list = ref<ListResponse[]>();
 const props = defineProps<BinderViewProps>();
+const emits = defineEmits<{
+  (e: 'open', con: boolean): void;
+}>();
 
 const op = ref();
 const colors = ref<string[]>([]);
@@ -91,6 +96,12 @@ const setTaskMenu = (): void => {
   ];
 };
 
+const toggleSideBar = () => {
+  // sideBarStore.isOpen = !sideBarStore.isOpen;
+  sideBarStore.triggerSideBar();
+  emits('open', sideBarStore.isOpen);
+};
+
 const getDataList = async (): Promise<void> => {
   loadingListData.value = true;
   try {
@@ -157,12 +168,20 @@ watch(
 );
 </script>
 <template>
-  <div class="w-[25%] text-dark h-screen">
+  <!-- <div
+    :class="`text-dark ${isOpenSideBar ? 'w-[25%] h-screen' : 'w-[4%] h-fit'}`"
+  > -->
+  <div :class="getElementStyle(sideBarStore.isOpen).sideBarElement">
     <div class="w-full h-full">
-      <div class="h-full bg-secondary rounded-e-xl flex flex-col">
-        <div class="w-full flex flex-row justify-between items-center p-4">
-          <h2 class="text-xl font-bold">Hi, {{ props?.username }}!</h2>
-          <span class="cursor-pointer hover:bg-gray-300/50 rounded-md p-2">
+      <div :class="getElementStyle(sideBarStore.isOpen).sideBarBackground">
+        <div :class="getElementStyle(sideBarStore.isOpen).sideBarContainer">
+          <h2 :class="getElementStyle(sideBarStore.isOpen).sideBarTextUsername">
+            Hi, {{ props?.username }}!
+          </h2>
+          <span
+            class="cursor-pointer hover:bg-gray-300/50 rounded-md p-2"
+            @click="toggleSideBar"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="24"
@@ -176,7 +195,7 @@ watch(
             </svg>
           </span>
         </div>
-        <div class="w-full px-4">
+        <div :class="getElementStyle(sideBarStore.isOpen).sideBarTaskList">
           <div class="w-full pb-2">
             <span class="text-black text-normal font-bold">TASKS</span>
           </div>
@@ -236,9 +255,9 @@ watch(
               <span class="font-bold text-sm">5</span>
             </div>
           </div>
-          <hr class="my-4 border-gray-400/40 ml-2" />
+          <!-- <hr class="my-4 border-gray-400/40 ml-2" /> -->
         </div>
-        <div class="w-full px-4">
+        <div :class="getElementStyle(sideBarStore.isOpen).sideBarList">
           <div class="w-full pb-2">
             <span class="text-black text-normal font-bold">LIST</span>
           </div>
@@ -324,9 +343,9 @@ watch(
               <span class="w-full text-sm font-medium">Add New List</span>
             </div>
           </div>
+          <!-- <hr class="my-4 border-gray-400/40 ml-2" /> -->
         </div>
-        <hr class="my-4 border-gray-400/40 ml-2" />
-        <div class="w-full h-full grid items-end">
+        <div :class="getElementStyle(sideBarStore.isOpen).sideBarMiniMenu">
           <div class="flex flex-col w-full gap-2 mb-3 mx-1">
             <div class="flex items-center cursor-pointer rounded-md mx-2">
               <div class="w-full flex flex-row items-center py-2">

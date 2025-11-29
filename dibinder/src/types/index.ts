@@ -71,7 +71,6 @@ export interface TasksResponse {
     description: string;
     done: boolean;
     list?: string;
-    startDate: Date | string;
     dueDate: Date | string;
     subTask: {
         name: string;

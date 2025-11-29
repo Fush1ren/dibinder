@@ -1,18 +1,39 @@
 import { Router } from "express";
 import passport from "passport";
-import { Task, UserRequest } from "../types";
+import { GetTaskQueryParams, Task, UserRequest } from "../types";
 import Tasks from "../schema/tasks";
 import { checkValueIsNotEmpty } from "../utils/data";
+import { SortOrder } from "mongoose";
 
 const taskRouter = Router();
 
 taskRouter.get('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const user = req?.user as UserRequest;
+        const query = req?.query as GetTaskQueryParams;
 
-        const task = await Tasks.find({
+        const createdAtParams = query?.createdAt  ? JSON.parse(query?.createdAt as any) : null;
+        
+        let filter = {
             user: user?.id,
-        }).lean();
+        } as {
+            user: string,
+            createdAt: any;
+        }
+        
+        if (createdAtParams?.length === 2) {
+            filter.createdAt = {
+                $gte: new Date(createdAtParams[0]),
+                $lte: new Date(createdAtParams[1]),
+            }
+        }
+        const sortBy = query.sort ? { createdAt: query.sort === "asc" ? 1 : -1 } : {};
+
+        // const task = await Tasks.find(filter).lean();
+        const task = await Tasks.find(filter).sort(sortBy as Record<string, SortOrder> | undefined).lean();
+        // const task = await Tasks.find({
+        //     user: user?.id,
+        // }).lean();
 
         res.status(200).json({
             data: task,
@@ -39,7 +60,6 @@ taskRouter.post('/', passport.authenticate('jwt', { session: false }), async (re
             description: body?.description || null,
             done: body?.done || false,
             list: body?.list || null,
-            startDate: body?.startDate || null,
             dueDate: body?.dueDate || null,
             subTask: body?.subTask || null,
             user: user?.id,
@@ -75,7 +95,7 @@ taskRouter.patch('/', passport.authenticate('jwt', { session: false }), async (r
                     description: body?.description,
                     done: body?.done,
                     list: body?.list,
-                    startDate: body?.startDate,
+                    dueDate: body?.dueDate,
                     subTask: body?.subTask,
                 }
             },

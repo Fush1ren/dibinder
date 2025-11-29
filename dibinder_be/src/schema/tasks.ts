@@ -18,9 +18,6 @@ const TasksSchema = new Schema(
             type: Schema.Types.ObjectId,
             ref: 'list'
         },
-        startDate: {
-            type: Date
-        },
         dueDate: {
             type: Date,
         },
