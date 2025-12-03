@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { useListStore, useSideBarStore } from '@/stores';
+import {
+  useListStore,
+  useSideBarStore,
+  useTaskDetailStore,
+  useTaskStore,
+} from '@/stores';
 import type { ListResponse, BinderViewProps, SideBarTaskList } from '@/types';
 import { api } from '@/utils/axios';
 import {
@@ -19,8 +24,10 @@ import getElementStyle from '@/utils/styling';
 const route = useRoute();
 const router = useRouter();
 const toast = useToast();
+const taskStore = useTaskStore();
 const listStore = useListStore();
 const sideBarStore = useSideBarStore();
+const taskDetailStore = useTaskDetailStore();
 const list = ref<ListResponse[]>();
 const props = defineProps<BinderViewProps>();
 const emits = defineEmits<{
@@ -106,6 +113,7 @@ const getDataList = async (): Promise<void> => {
   loadingListData.value = true;
   try {
     await listStore.getList();
+    await taskStore.getTaskLength();
     list.value = listStore.lists;
   } catch (e) {
     console.error(e);
@@ -168,14 +176,31 @@ watch(
 );
 </script>
 <template>
-  <!-- <div
-    :class="`text-dark ${isOpenSideBar ? 'w-[25%] h-screen' : 'w-[4%] h-fit'}`"
-  > -->
-  <div :class="getElementStyle(sideBarStore.isOpen).sideBarElement">
+  <div
+    :class="
+      getElementStyle(sideBarStore.isOpen, taskDetailStore.isOpen)
+        .sideBarElement
+    "
+  >
     <div class="w-full h-full">
-      <div :class="getElementStyle(sideBarStore.isOpen).sideBarBackground">
-        <div :class="getElementStyle(sideBarStore.isOpen).sideBarContainer">
-          <h2 :class="getElementStyle(sideBarStore.isOpen).sideBarTextUsername">
+      <div
+        :class="
+          getElementStyle(sideBarStore.isOpen, taskDetailStore.isOpen)
+            .sideBarBackground
+        "
+      >
+        <div
+          :class="
+            getElementStyle(sideBarStore.isOpen, taskDetailStore.isOpen)
+              .sideBarContainer
+          "
+        >
+          <h2
+            :class="
+              getElementStyle(sideBarStore.isOpen, taskDetailStore.isOpen)
+                .sideBarTextUsername
+            "
+          >
             Hi, {{ props?.username }}!
           </h2>
           <span
@@ -195,7 +220,12 @@ watch(
             </svg>
           </span>
         </div>
-        <div :class="getElementStyle(sideBarStore.isOpen).sideBarTaskList">
+        <div
+          :class="
+            getElementStyle(sideBarStore.isOpen, taskDetailStore.isOpen)
+              .sideBarTaskList
+          "
+        >
           <div class="w-full pb-2">
             <span class="text-black text-normal font-bold">TASKS</span>
           </div>
@@ -252,12 +282,24 @@ watch(
               v-if="data?.name !== 'Calendar'"
               class="bg-primary mx-3 px-4 py-px rounded-md"
             >
-              <span class="font-bold text-sm">5</span>
+              <span v-if="data?.name === 'Today'" class="font-bold text-sm">{{
+                `${taskStore?.tasksLength?.today ?? 0}`
+              }}</span>
+              <span
+                v-if="data?.name === 'All Task'"
+                class="font-bold text-sm"
+                >{{ `${taskStore?.tasksLength?.all ?? 0}` }}</span
+              >
             </div>
           </div>
           <!-- <hr class="my-4 border-gray-400/40 ml-2" /> -->
         </div>
-        <div :class="getElementStyle(sideBarStore.isOpen).sideBarList">
+        <div
+          :class="
+            getElementStyle(sideBarStore.isOpen, taskDetailStore.isOpen)
+              .sideBarList
+          "
+        >
           <div class="w-full pb-2">
             <span class="text-black text-normal font-bold">LIST</span>
           </div>
@@ -271,6 +313,7 @@ watch(
                 @click="toggle"
                 :id="data?._id"
                 :listColor="data?.color"
+                :clickable="true"
               />
 
               <Popover
@@ -320,7 +363,7 @@ watch(
               <span class="w-full text-sm font-medium">{{ data?.name }}</span>
             </div>
             <div class="bg-primary mx-3 px-4 py-px rounded-md">
-              <span class="font-bold text-sm">{{ data?.task?.length }}</span>
+              <span class="font-bold text-sm">{{ data?.task ?? 0 }}</span>
             </div>
           </div>
           <div
@@ -345,7 +388,12 @@ watch(
           </div>
           <!-- <hr class="my-4 border-gray-400/40 ml-2" /> -->
         </div>
-        <div :class="getElementStyle(sideBarStore.isOpen).sideBarMiniMenu">
+        <div
+          :class="
+            getElementStyle(sideBarStore.isOpen, taskDetailStore.isOpen)
+              .sideBarMiniMenu
+          "
+        >
           <div class="flex flex-col w-full gap-2 mb-3 mx-1">
             <div class="flex items-center cursor-pointer rounded-md mx-2">
               <div class="w-full flex flex-row items-center py-2">
@@ -365,7 +413,10 @@ watch(
                 <span class="w-full text-sm font-medium"> Settings </span>
               </div>
             </div>
-            <div class="flex items-center cursor-pointer rounded-md mx-2">
+            <div
+              @click="setRoute('/logout')"
+              class="flex items-center cursor-pointer rounded-md mx-2"
+            >
               <div class="w-full flex flex-row items-center py-2">
                 <span class="px-2">
                   <svg
@@ -380,7 +431,7 @@ watch(
                     />
                   </svg>
                 </span>
-                <span class="w-full text-sm font-medium"> Sign out </span>
+                <span class="w-full text-sm font-medium"> Logout </span>
               </div>
             </div>
           </div>

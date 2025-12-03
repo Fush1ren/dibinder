@@ -2,7 +2,9 @@
 import type { ButtonColorProps } from '@/types';
 import { computed, ref } from 'vue';
 
-const props = defineProps<ButtonColorProps>();
+const props = withDefaults(defineProps<ButtonColorProps>(), {
+  clickable: true,
+});
 const emit = defineEmits<{
   (e: 'click', event: MouseEvent): void;
 }>();
@@ -31,6 +33,7 @@ const buttonStyle = computed(() => ({
 </script>
 <template>
   <button
+    v-if="props.clickable"
     @click="toggle"
     :class="`relative !border-none mx-2 rounded-md transition-all duration-200 list-${props?.id} cursor-pointer w-[32px] h-[28px] flex justify-center items-center`"
     :style="buttonStyle"
@@ -55,4 +58,9 @@ const buttonStyle = computed(() => ({
       </svg>
     </div>
   </button>
+  <button
+    v-else
+    :class="`relative !border-none rounded-md transition-all duration-200 list-${props?.id} cursor-pointer w-[20px] h-[20px] flex justify-center items-center`"
+    :style="buttonStyle"
+  />
 </template>

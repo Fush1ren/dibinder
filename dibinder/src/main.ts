@@ -7,6 +7,8 @@ import KeyFilter from 'primevue/keyfilter';
 import App from './App.vue';
 import Aura from '@primeuix/themes/aura';
 import router from './router';
+import 'primeicons/primeicons.css'
+import ConfirmationService from 'primevue/confirmationservice';
 import './assets/style.css';
 
 const app = createApp(App);
@@ -23,4 +25,5 @@ app.use(pinia);
 pinia.use(piniaPluginPersistedstate);
 app.use(router);
 app.use(ToastService);
+app.use(ConfirmationService);
 app.mount('#app');
