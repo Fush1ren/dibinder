@@ -11,6 +11,15 @@ const routes: Readonly<RouteRecordRaw[]> = [
         }
     },
     {
+        path: '/logout',
+        name: 'logout',
+        component: () => import('@/views/LogoutView.vue'),
+        meta: {
+            title: 'Logout',
+            requiresAuth: true,
+        }
+    },
+    {
         path: '/binder',
         name: 'binder',
         component: () => import('@/layouts/BinderLayout.vue'),

@@ -1,4 +1,4 @@
-import type { ListResponse , ResponseAPI, TasksResponse } from "@/types";
+import type { BodyTask, ListDropdownResponse, ListResponse , ResponseAPI, TaskLengthResponse, TasksResponse } from "@/types";
 import { api } from "@/utils/axios";
 import type { AxiosResponse } from "axios";
 import { defineStore } from "pinia";
@@ -80,6 +80,7 @@ export const useAuthStore = defineStore('auth', () => {
 export const useListStore = defineStore('list', () => {
   const lists = ref<ListResponse[]>();
   const listActive = ref<string>();
+  const listDropdown = ref<ListDropdownResponse[]>();
 
   function setListActive(id: string) {
     listActive.value = id;
@@ -92,14 +93,21 @@ export const useListStore = defineStore('list', () => {
   async function getList(): Promise<void> {
     const { data }  = await api.get('/list') as AxiosResponse<ResponseAPI<ListResponse[]>>;
     lists.value = data.data;
+  
+  }
+  async function getListDropdown(): Promise<void> {
+    const { data }  = await api.get('/list/dropdown') as AxiosResponse<ResponseAPI<ListDropdownResponse[]>>;
+    listDropdown.value = data.data;
   }
 
   return {
     lists,
     listActive,
+    listDropdown,
     getList,
     setListActive,
     clearList,
+    getListDropdown
   }
 }, {
     persist: {
@@ -110,16 +118,47 @@ export const useListStore = defineStore('list', () => {
 
 export const useTaskStore = defineStore('task', () => {
   const tasks = ref<TasksResponse[]>();
+  const tasksLength = ref<TaskLengthResponse>();
 
   async function getTasks(params?: any){
     const { data } = await api.get('/task', { params }) as AxiosResponse<ResponseAPI<TasksResponse[]>>;
 
     tasks.value = data.data;
+    // const result = [] as TasksResponse[] ;
+    // for (let i = 0; i < 2; i++) {
+    //   data.data.forEach(item => {
+    //     result.push(item)
+    //   });
+    // }
+
+    // tasks.value = result;
+  }
+
+  async function getTaskLength() {
+    const { data } = await api.get('/task/length') as AxiosResponse<ResponseAPI<TaskLengthResponse>>;
+    tasksLength.value = data.data;
+  }
+
+  async function createTask(body: BodyTask) {
+    await api.post('/task', body);
+  }
+
+  async function updateTask(id: string, body: BodyTask) {
+    await api.patch(`/task/${id}`, body);
+  }
+
+  async function deleteTask(id: string) {
+    await api.delete(`/task/${id}`)
   }
 
   return {
     tasks,
+    tasksLength,
     getTasks,
+    getTaskLength,
+    updateTask,
+    createTask,
+    deleteTask,
   }
 });
 
@@ -133,5 +172,43 @@ export const useSideBarStore = defineStore('sideBar', () => {
   return {
     isOpen,
     triggerSideBar,
+  }
+})
+
+export const useTaskDetailStore = defineStore('taskDetail', () => {
+  const isOpen = ref<boolean>(false);
+  const task = ref<TasksResponse>();
+
+  function triggerTaskDetail(){
+    isOpen.value = !isOpen.value;
+  }
+
+  function triggerAddNewTask() {
+    clearTask()
+    isOpen.value = true;
+  }
+
+  function closeTaskDetail() {
+    isOpen.value = false;
+  }
+
+  function triggerEditTask(data: TasksResponse) {
+    task.value = data;
+    isOpen.value = true;
+  }
+
+  function clearTask() {
+    task.value = undefined;
+  }
+
+
+  return {
+    isOpen,
+    task,
+    triggerTaskDetail,
+    triggerAddNewTask,
+    closeTaskDetail,
+    triggerEditTask,
+    clearTask,
   }
 })

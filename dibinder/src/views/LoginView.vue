@@ -92,7 +92,7 @@ const submitForm = async (e: FormSubmitEvent) => {
       life: 3000,
     });
     authStore.setUser(
-      data?.id,
+      data?.user_id,
       data?.token,
       data?.name,
       data?.photoUrl,

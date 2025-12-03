@@ -60,9 +60,15 @@ export interface ListResponse {
     name: string;
     color: string;
     user: string;
-    task: TasksResponse[];
+    task: number;
     createdAt: Date | string;
     updatedAt: Date | string;
+}
+
+export interface ListDropdownResponse {
+    _id: string;
+    name: string;
+    color: string;
 }
 
 export interface TasksResponse {
@@ -70,7 +76,12 @@ export interface TasksResponse {
     name: string;
     description: string;
     done: boolean;
-    list?: string;
+    list?: {
+        _id: string;
+        name: string;
+        color: string;
+    };
+    startDate: Date | string;
     dueDate: Date | string;
     subTask: {
         name: string;
@@ -82,4 +93,27 @@ export interface TasksResponse {
 export type ButtonColorProps = {
     id: string;
     listColor: string;
+
+    /**
+     *  @default true
+     */
+    clickable: boolean;
+}
+
+export interface TaskLengthResponse {
+    today: number;
+    all: number;
+}
+
+export interface BodyTask {
+    name: string;
+    description: string;
+    done: boolean;
+    list: string;
+    startDate: Date | null;
+    dueDate: Date | null;
+    subTask: {
+        name: string;
+        done: boolean;
+    }[]
 }

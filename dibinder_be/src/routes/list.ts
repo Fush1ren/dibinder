@@ -27,7 +27,7 @@ listRouter.get('/', passport.authenticate('jwt', { session: false }), async (req
 
                 return {
                     ...d,
-                    task,
+                    task: task?.length,
                 };
             })
         );
@@ -44,6 +44,32 @@ listRouter.get('/', passport.authenticate('jwt', { session: false }), async (req
         });
     }
 });
+
+listRouter.get('/dropdown', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    try {
+        const user = req?.user as UserRequest;
+
+        const lists = await List.find({
+            user: user?.id
+        }).sort({
+            name: 'asc'
+        }).lean();
+
+        res.status(200).json({
+            data: lists?.map((d) => ({
+                _id: d?._id,
+                name: d?.name,
+                color: d?.color,
+            })),
+        });
+    } catch (e) {
+        console.error(e)
+        res.status(500).json({
+            error: true,
+            message: (e as Error)?.message || "Failed to get list" 
+        });
+    }
+})
 
 listRouter.post('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
