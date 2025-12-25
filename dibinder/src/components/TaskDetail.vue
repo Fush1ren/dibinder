@@ -25,6 +25,7 @@ import {
   useToast,
 } from 'primevue';
 import { ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 
 const sidebarStore = useSideBarStore();
 const listStore = useListStore();
@@ -32,6 +33,7 @@ const taskStore = useTaskStore();
 const taskDetailStore = useTaskDetailStore();
 const toast = useToast();
 const confirm = useConfirm();
+const route = useRoute();
 
 const initialValues = ref<BodyTask>();
 const name = ref<string>();
@@ -150,12 +152,15 @@ const actionForm = async (e: FormSubmitEvent): Promise<void> => {
     };
     dataDate.startDate ? dataDate.startDate?.setHours(12, 0, 0, 0) : null;
     dataDate.dueDate ? dataDate.dueDate?.setHours(12, 0, 0, 0) : null;
-    // const done =
-    // return console.log(dataDate.startDate?.toISOString());
+    const done =
+      subTask?.value?.length > 0
+        ? subTask?.value.every((i) => i.done === true)
+        : taskDetailStore?.task?.done;
+
     if (taskDetailStore.task?._id) {
       await taskStore.updateTask(taskDetailStore.task?._id, {
         name: e?.states?.task?.value,
-        done: taskDetailStore?.task?.done,
+        done: done as boolean,
         description: e?.states?.description?.value,
         list: (e?.states?.list?.value as ListDropdownResponse)?._id,
         startDate: dataDate.startDate
@@ -192,23 +197,37 @@ const actionForm = async (e: FormSubmitEvent): Promise<void> => {
         detail: 'Create task was successfully!',
         life: 3000,
       });
-      await listStore.getList();
-      await taskStore.getTaskLength();
     }
 
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
+    await listStore.getList();
+    await taskStore.getTaskLength();
 
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
+    if (route?.fullPath?.includes('/binder/tasks/today')) {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
 
-    const body = {
-      sort: 'desc',
-    } as { [key: string]: any };
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
 
-    body.startDate = JSON.stringify([startOfDay, endOfDay]);
+      const body = {
+        sort: 'desc',
+      } as { [key: string]: any };
+      body.startDate = JSON.stringify([startOfDay, endOfDay]);
 
-    await taskStore.getTasks(body);
+      await taskStore.getTasks(body);
+    } else if (route?.fullPath?.includes('/binder/tasks/all-task')) {
+      await taskStore.getTasks();
+    } else {
+      await listStore.getListById(listStore.listActive?.id!);
+    }
+
+    name.value = undefined;
+    description.value = undefined;
+    listTask.value = undefined;
+    startDate.value = undefined;
+    dueDate.value = undefined;
+    subTask.value = [];
+    taskDetailStore.clearTask();
     taskDetailStore.closeTaskDetail();
   } catch (e) {
     console.error(e);
@@ -255,22 +274,35 @@ const deleteTask = async (): Promise<void> => {
       life: 3000,
     });
 
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
+    if (route?.fullPath?.includes('/binder/tasks/today')) {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
 
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
 
-    const body = {
-      sort: 'desc',
-    } as { [key: string]: any };
+      const body = {
+        sort: 'desc',
+      } as { [key: string]: any };
+      body.startDate = JSON.stringify([startOfDay, endOfDay]);
 
-    body.startDate = JSON.stringify([startOfDay, endOfDay]);
-
-    await taskStore.getTasks(body);
+      await taskStore.getTasks(body);
+    } else if (route?.fullPath?.includes('/binder/tasks/all-task')) {
+      await taskStore.getTasks();
+    } else {
+      await listStore.getListById(listStore.listActive?.id!);
+    }
 
     await listStore.getList();
     await taskStore.getTaskLength();
+
+    name.value = undefined;
+    description.value = undefined;
+    listTask.value = undefined;
+    startDate.value = undefined;
+    dueDate.value = undefined;
+    subTask.value = [];
+    taskDetailStore.clearTask();
     taskDetailStore.closeTaskDetail();
   } catch (e) {
     toast.add({
@@ -287,7 +319,7 @@ watch(
   () => {
     name.value = taskDetailStore.task?.name;
     description.value = taskDetailStore.task?.description;
-    listTask.value = taskDetailStore.task?.list;
+    listTask.value = taskDetailStore.task?.list as ListDropdownResponse;
     listOptions.value = listStore.listDropdown;
     startDate.value = taskDetailStore.task?.startDate
       ? new Date(taskDetailStore.task?.startDate)
@@ -301,6 +333,14 @@ watch(
           name: i?.name,
         })) as { done: boolean; name: string }[])
       : [];
+  },
+);
+
+watch(
+  () => route?.fullPath,
+  () => taskDetailStore.closeTaskDetail(),
+  {
+    immediate: true,
   },
 );
 </script>
