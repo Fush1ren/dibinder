@@ -1,26 +1,38 @@
 <script setup lang="ts">
 import ButtonColor from '@/components/ButtonColor.vue';
 import { useTaskDetailStore, useTaskStore } from '@/stores';
-import type { BodyTask, TasksResponse } from '@/types';
+import type { TasksResponse } from '@/types';
 import { formatDate } from '@/utils/data';
 import { Checkbox } from 'primevue';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 
+const route = useRoute();
 const taskStore = useTaskStore();
 const taskDetailStore = useTaskDetailStore();
 
-onMounted(() => getTask());
+onMounted(() => {
+  getTask();
+  isDone.value = taskStore.taskDone;
+});
 
 const isDone = ref<boolean[]>([]);
 
 const setDone = async (e: boolean, data: TasksResponse): Promise<void> => {
   // (isDone.value as boolean[])[index] = !isDone.value;
   try {
-    console.log(e);
+    // console.log(e);
     const body = {
-      name: data?.name,
-    } as BodyTask;
-    await taskStore.updateTask(data?._id, body);
+      done: e,
+      subTask: data?.subTask as {
+        name: string;
+        done: boolean;
+      }[],
+    };
+    await taskStore.updateTaskDone(data?._id, body);
+    await taskStore.getTasks();
+    taskDetailStore.closeTaskDetail();
+    isDone.value = taskStore.tasks?.map((t) => t?.done) as boolean[];
   } catch (err) {
     console.error(err);
   }
@@ -28,35 +40,52 @@ const setDone = async (e: boolean, data: TasksResponse): Promise<void> => {
 
 const getTask = async () => {
   try {
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
+    if (route?.fullPath?.includes('today')) {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
 
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
 
-    const body = {
-      sort: 'desc',
-    } as { [key: string]: any };
+      const body = {
+        sort: 'desc',
+      } as { [key: string]: any };
+      body.startDate = JSON.stringify([startOfDay, endOfDay]);
 
-    body.startDate = JSON.stringify([startOfDay, endOfDay]);
+      await taskStore.getTasks(body);
+    } else {
+      await taskStore.getTasks();
+    }
 
-    await taskStore.getTasks(body);
+    isDone.value = taskStore.tasks?.map((t) => t?.done) as boolean[];
     // await taskStore.getTasks({
     //   sort: 'desc',
     // });
 
-    isDone.value = taskStore.tasks?.map((d) => d.done) as boolean[];
+    // isDone.value = taskStore.tasks?.map((d) => d.done) as boolean[];
   } catch (e) {
     console.error(e);
   }
 };
+
+watch(
+  () => route.fullPath,
+  async () => {
+    await getTask();
+  },
+  {
+    immediate: true,
+  },
+);
 </script>
 
 <template>
   <div class="w-full h-screen">
     <div class="w-full h-full p-4">
       <div class="h-[10%]">
-        <h1 class="text-3xl font-bold pb-4">Today</h1>
+        <h1 class="text-3xl font-bold pb-4">
+          {{ route?.fullPath?.includes('today') ? 'Today' : 'All Task' }}
+        </h1>
       </div>
 
       <div class="w-full h-[90%] flex flex-col pt-4">

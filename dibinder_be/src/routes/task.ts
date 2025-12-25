@@ -163,7 +163,7 @@ taskRouter.patch('/:id', passport.authenticate('jwt', { session: false }), async
         const body = req?.body as Task;
         checkValueIsNotEmpty(res, [taskId, body?.name]);
 
-        const isAllSubtaskDone = body?.subTask ? body?.subTask?.every(i => i.done === true) : null;
+        const isAllSubtaskDone = body?.subTask?.length > 0 ? body?.subTask?.every(i => i.done === true) : null;
 
         const updatedTask = await Tasks.findOneAndUpdate(
             {
@@ -204,6 +204,63 @@ taskRouter.patch('/:id', passport.authenticate('jwt', { session: false }), async
         });
     }
 });
+
+taskRouter.patch('/:id/done', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    try {
+        const taskId = (req?.params as {id: string})?.id as string
+        const user = req?.user as UserRequest;
+        const body = req?.body as Task;
+
+        if (body?.done === undefined || body?.done === null) {
+            return res.status(400).json({
+                error: true,
+                message: "Task Done is required" 
+            })
+        }
+
+        const updateSubTask = body?.done === true ? body?.subTask?.map((d) => ({
+            done: true,
+            name: d?.name,
+        }) ) : body?.subTask?.map((d) => ({
+            done: false,
+            name: d?.name,
+        }) );
+
+
+        const updatedTask = await Tasks.findOneAndUpdate(
+            {
+                _id: taskId,
+                user: user?.id,
+            },
+            {
+                $set: {
+                    done: body?.done,
+                    subTask: updateSubTask,
+                }
+            },
+            {
+                new: true,
+                runValidatorsL: true,
+            }
+        ).lean();
+
+        if (!updatedTask) {
+            return res
+                .status(404)
+                .json({ 
+                    error: true,
+                    message: "Task not found or you don't have permission" 
+            });
+        }
+
+        res.status(200).json(updatedTask);
+    } catch (e) {
+        res.status(500).json({ 
+            error: true,
+            message: (e as Error)?.message || "Failed to update task" 
+        });
+    }
+})
 
 taskRouter.delete('/:id', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {

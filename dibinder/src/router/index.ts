@@ -11,6 +11,11 @@ const routes: Readonly<RouteRecordRaw[]> = [
         }
     },
     {
+        path: "/404",
+        name: "notFoundView",
+        component: () => import("@/views/NotFoundView.vue"),
+    },
+    {
         path: '/logout',
         name: 'logout',
         component: () => import('@/views/LogoutView.vue'),
@@ -33,11 +38,26 @@ const routes: Readonly<RouteRecordRaw[]> = [
                 component: () => import('@/layouts/TasksLayout.vue'),
                 children: [
                     {
-                        path: 'today',
-                        name: 'taskToday',
-                        component: () => import('@/views/task/TaskTodayView.vue'),
-                    }
+                        path: ':taskType',
+                        name: 'taskType',
+                        component: () => import('@/views/task/TaskAllView.vue'),
+                    },
+                    {
+                        path: 'calendar',
+                        name: 'taskCalendar',
+                        component: () => import('@/views/task/TaskCalendar.vue'),
+                    },
+                    // {
+                    //     path: 'today',
+                    //     name: 'taskToday',
+                    //     component: () => import('@/views/task/TaskTodayView.vue'),
+                    // }
                 ]
+            },
+            {
+                path: 'list/:listName',
+                name: 'listTask',
+                component: () => import('@/views/list/ListView.vue'),
             },
             {
                 path: 'today',
@@ -69,6 +89,10 @@ const routes: Readonly<RouteRecordRaw[]> = [
         meta: {
             title: 'Auth Callback'
         }
+    },
+    {
+        path: "/:pathMatch(.*)*",
+        redirect: "/404",
     }
 ];
 
@@ -92,7 +116,7 @@ router.beforeEach((to, _from, next) => {
         (to.name === "login" || to.name === "signup") &&
         isAuthenticated
     ) {
-        next({ name: "taskToday" });
+        next({ name: "tasks" });
     } else {
         next();
     }

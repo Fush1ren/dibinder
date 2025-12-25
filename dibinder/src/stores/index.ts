@@ -1,4 +1,4 @@
-import type { BodyTask, ListDropdownResponse, ListResponse , ResponseAPI, TaskLengthResponse, TasksResponse } from "@/types";
+import type { BodyList, BodyTask, ListByIdResponse, ListDropdownResponse, ListResponse , ResponseAPI, TaskLengthResponse, TasksResponse } from "@/types";
 import { api } from "@/utils/axios";
 import type { AxiosResponse } from "axios";
 import { defineStore } from "pinia";
@@ -79,11 +79,18 @@ export const useAuthStore = defineStore('auth', () => {
 
 export const useListStore = defineStore('list', () => {
   const lists = ref<ListResponse[]>();
-  const listActive = ref<string>();
+  const listActive = ref<{
+    id: string;
+    name: string;
+  }>();
+  const list = ref<ListByIdResponse>();
   const listDropdown = ref<ListDropdownResponse[]>();
 
-  function setListActive(id: string) {
-    listActive.value = id;
+  function setListActive(data: ({
+    id: string;
+    name: string;
+  })) {
+    listActive.value = data;
   }
 
   function clearList() {
@@ -93,21 +100,38 @@ export const useListStore = defineStore('list', () => {
   async function getList(): Promise<void> {
     const { data }  = await api.get('/list') as AxiosResponse<ResponseAPI<ListResponse[]>>;
     lists.value = data.data;
-  
   }
+
+  async function getListById(id: string): Promise<void> {
+    const { data }  = await api.get(`/list/${id}`) as AxiosResponse<ResponseAPI<ListByIdResponse>>;
+    list.value = data.data;
+  }
+
   async function getListDropdown(): Promise<void> {
     const { data }  = await api.get('/list/dropdown') as AxiosResponse<ResponseAPI<ListDropdownResponse[]>>;
     listDropdown.value = data.data;
   }
 
+  async function createList(body: BodyList): Promise<void>{
+    await api.post('/list', body);
+  }
+
+  async function updateList(id: string, body: BodyList): Promise<void> {
+    await api.patch(`/list/${id}`, body);
+  }
+
   return {
+    list,
     lists,
     listActive,
     listDropdown,
     getList,
     setListActive,
     clearList,
-    getListDropdown
+    getListDropdown,
+    getListById,
+    createList,
+    updateList,
   }
 }, {
     persist: {
@@ -119,11 +143,13 @@ export const useListStore = defineStore('list', () => {
 export const useTaskStore = defineStore('task', () => {
   const tasks = ref<TasksResponse[]>();
   const tasksLength = ref<TaskLengthResponse>();
+  const taskDone = ref<boolean[]>([]);
 
   async function getTasks(params?: any){
     const { data } = await api.get('/task', { params }) as AxiosResponse<ResponseAPI<TasksResponse[]>>;
 
     tasks.value = data.data;
+    taskDone.value = tasks.value?.map((d) => d.done);
     // const result = [] as TasksResponse[] ;
     // for (let i = 0; i < 2; i++) {
     //   data.data.forEach(item => {
@@ -147,6 +173,10 @@ export const useTaskStore = defineStore('task', () => {
     await api.patch(`/task/${id}`, body);
   }
 
+  async function updateTaskDone(id: string, body: { done: boolean, subTask: { done: boolean; name: string }[]}) {
+    await api.patch(`/task/${id}/done`, body);
+  }
+
   async function deleteTask(id: string) {
     await api.delete(`/task/${id}`)
   }
@@ -154,9 +184,11 @@ export const useTaskStore = defineStore('task', () => {
   return {
     tasks,
     tasksLength,
+    taskDone,
     getTasks,
     getTaskLength,
     updateTask,
+    updateTaskDone,
     createTask,
     deleteTask,
   }

@@ -65,6 +65,16 @@ export interface ListResponse {
     updatedAt: Date | string;
 }
 
+export interface ListByIdResponse {
+    _id: string;
+    name: string;
+    color: string;
+    user: string;
+    task: TasksResponse[];
+    createdAt: Date | string;
+    updatedAt: Date | string;
+}
+
 export interface ListDropdownResponse {
     _id: string;
     name: string;
@@ -79,8 +89,8 @@ export interface TasksResponse {
     list?: {
         _id: string;
         name: string;
-        color: string;
-    };
+        color: string | null;
+    } | null;
     startDate: Date | string;
     dueDate: Date | string;
     subTask: {
@@ -91,13 +101,31 @@ export interface TasksResponse {
 }
 
 export type ButtonColorProps = {
-    id: string;
-    listColor: string;
+    // id: string;
+    // listColor: string;
 
     /**
      *  @default true
      */
     clickable: boolean;
+    data: {
+        id: string;
+        name: string;
+        color: string;
+    }
+}
+
+export type ButtonColorData = {
+    id: string | undefined;
+    name: string;
+    color: string | undefined;
+}
+
+export interface ButtonColorEmits {
+    'submit': [payload: {
+        event: PointerEvent | Event,
+        data: ButtonColorData,
+    }]
 }
 
 export interface TaskLengthResponse {
@@ -116,4 +144,24 @@ export interface BodyTask {
         name: string;
         done: boolean;
     }[]
+}
+
+export interface BodyList{
+    name: string;
+    color: string | null;
+}
+
+export interface CDialogProps {
+    // modelValue: boolean;
+    visible: boolean;
+    header: string;
+    data?: ListByIdResponse | undefined;
+}
+
+export interface CDialogEmits {
+    'submit': [payload: {
+        id: string | undefined;
+        name: string;
+        colors: string;
+    }]
 }

@@ -5,21 +5,18 @@ import {
   useTaskDetailStore,
   useTaskStore,
 } from '@/stores';
-import type { ListResponse, BinderViewProps, SideBarTaskList } from '@/types';
-import { api } from '@/utils/axios';
-import {
-  Button,
-  ColorPicker,
-  InputGroup,
-  InputGroupAddon,
-  InputText,
-  Popover,
-  useToast,
-} from 'primevue';
-import { onMounted, ref, shallowRef, watch } from 'vue';
+import type {
+  ListResponse,
+  BinderViewProps,
+  SideBarTaskList,
+  ButtonColorData,
+} from '@/types';
+import { useToast } from 'primevue';
+import { onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import ButtonColor from './ButtonColor.vue';
 import getElementStyle from '@/utils/styling';
+import DialogActionList from './DialogActionList.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -34,12 +31,9 @@ const emits = defineEmits<{
   (e: 'open', con: boolean): void;
 }>();
 
-const op = ref();
-const colors = ref<string[]>([]);
-const inputKey = shallowRef<number[]>([]);
-
 const taskMenu = ref<SideBarTaskList[]>();
 const loadingListData = ref<boolean>(false);
+const visibleDialogAction = ref<boolean>(false);
 
 onMounted(() => {
   setTaskMenu();
@@ -51,36 +45,8 @@ const setRoute = (path: string): void => {
   router.push(path);
 };
 
-const handleKeypress = (event: KeyboardEvent): void => {
-  const maxLength = 6;
-  const targetId = (event?.target as any)?.id as string;
-
-  const listIndex = list.value?.findIndex((l) => l._id === targetId) as number;
-
-  const isMaxLengthReached = maxLength === colors.value[listIndex]?.length;
-  if (isMaxLengthReached) {
-    event.preventDefault();
-
-    if (isMaxLengthReached && listIndex) {
-      (inputKey.value as any)[listIndex]++;
-    }
-  }
-};
-
-const toggle = (event: Event) => {
-  const classActive = (event.target as any)?.classList as { value: string };
-  if (!classActive) return;
-  if (!list.value) return;
-
-  const idActive = classActive?.value
-    ?.split(' ')
-    ?.filter((item) => item.includes('list-'))[0]
-    ?.replace('list-', '');
-  const indexActive = Number(list.value?.findIndex((i) => i._id == idActive));
-  if (colors.value) {
-    colors.value[indexActive] = list.value[indexActive]?.color ?? '';
-  }
-  op.value[indexActive]?.toggle(event);
+const toggleDialog = (): void => {
+  visibleDialogAction.value = !visibleDialogAction.value;
 };
 
 const setTaskMenu = (): void => {
@@ -92,21 +58,29 @@ const setTaskMenu = (): void => {
     },
     {
       name: 'All Task',
-      link: '/binder/all-task',
+      link: '/binder/tasks/all-task',
       isActive: props?.routeName === 'all-task',
     },
     {
       name: 'Calendar',
-      link: '/binder/calendar',
+      link: '/binder/tasks/calendar',
       isActive: props?.routeName === 'calendar',
     },
   ];
 };
 
 const toggleSideBar = () => {
-  // sideBarStore.isOpen = !sideBarStore.isOpen;
   sideBarStore.triggerSideBar();
   emits('open', sideBarStore.isOpen);
+};
+
+const setListActive = (data: ListResponse) => {
+  listStore.setListActive({
+    id: data?._id,
+    name: data?.name,
+  });
+
+  router.push(`/binder/list/${listStore.listActive?.name?.toLowerCase()}`);
 };
 
 const getDataList = async (): Promise<void> => {
@@ -122,25 +96,74 @@ const getDataList = async (): Promise<void> => {
   }
 };
 
-const updateList = async (
-  id: string,
-  name: string,
-  color: string,
-): Promise<void> => {
+const createList = async (e: {
+  id: string | undefined;
+  name: string;
+  colors: string;
+}): Promise<void> => {
   try {
-    if (!id && !name && !color) return;
+    if (!e?.name) return;
 
-    await api.patch(`/list/${id}`, {
-      name,
-      color,
+    await listStore.createList({
+      name: e?.name,
+      color: e?.colors,
     });
+
+    await listStore.getList();
+
+    toast.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: 'Create List was successfuly!',
+      life: 3000,
+    });
+
+    toggleDialog();
+  } catch (e) {
+    toast.add({
+      severity: 'error',
+      summary: 'Failed',
+      detail: `${(e as Error)?.message}`,
+      life: 3000,
+    });
+  }
+};
+
+const updateColor = async (e: {
+  event: PointerEvent | Event;
+  data: ButtonColorData;
+}): Promise<void> => {
+  try {
+    if (!e?.data?.id && !e?.data?.name) return;
+
+    await listStore.updateList(e?.data?.id as string, {
+      name: e?.data?.name as string,
+      color: e?.data?.color ?? '',
+    });
+
+    if (route?.fullPath?.includes('/binder/tasks/today')) {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const body = {
+        sort: 'desc',
+      } as { [key: string]: any };
+      body.startDate = JSON.stringify([startOfDay, endOfDay]);
+
+      await taskStore.getTasks(body);
+    } else if (route?.fullPath?.includes('/binder/tasks/all-task')) {
+      await taskStore.getTasks();
+    }
 
     await getDataList();
 
     toast.add({
       severity: 'success',
       summary: 'Success',
-      detail: 'Update List was successfuly!',
+      detail: 'Change Color List was successfuly!',
       life: 3000,
     });
   } catch (e) {
@@ -153,23 +176,19 @@ const updateList = async (
   }
 };
 
-const updateColor = async (
-  index: number,
-  id: string,
-  name: string,
-  // color: string,
-): Promise<void> => {
-  // if (!id && !name && !color && !index) return;
-  // await updateList(id, name, color[index] ?? '');
-  // op.value[index]?.hide;
-  const newColors = colors.value[index];
-  await updateList(id, name, newColors ?? '');
-  op.value[index]?.hide();
-};
-
 watch(
   () => route.path,
   () => setTaskMenu(),
+  {
+    immediate: true,
+  },
+);
+
+watch(
+  () => listStore.lists,
+  () => {
+    list.value = listStore.lists;
+  },
   {
     immediate: true,
   },
@@ -292,7 +311,6 @@ watch(
               >
             </div>
           </div>
-          <!-- <hr class="my-4 border-gray-400/40 ml-2" /> -->
         </div>
         <div
           :class="
@@ -307,59 +325,18 @@ watch(
             :key="index"
             v-for="(data, index) in list"
             class="flex items-center cursor-pointer rounded-md mx-2 my-1 py-1"
+            @click="setListActive(data)"
           >
             <div class="w-full flex flex-row items-center py-2">
               <ButtonColor
-                @click="toggle"
-                :id="data?._id"
-                :listColor="data?.color"
+                @submit="updateColor"
                 :clickable="true"
-              />
-
-              <Popover
-                ref="op"
-                :pt="{
-                  root: {
-                    class: '!bg-white',
-                  },
+                :data="{
+                  id: data?._id,
+                  name: data?.name,
+                  color: data?.color,
                 }"
-              >
-                <form
-                  @submit.prevent="updateColor(index, data?._id, data?.name)"
-                >
-                  <div class="flex flex-row gap-3 items-center">
-                    <ColorPicker v-model="colors[index]" format="hex" />
-                    <InputGroup>
-                      <InputGroupAddon
-                        :pt="{
-                          root: {
-                            class: '!bg-gray-200 !p-1 !border-black',
-                          },
-                        }"
-                      >
-                        <span class="text-lg font-bold text-black">#</span>
-                      </InputGroupAddon>
-                      <InputText
-                        :key="inputKey[index]"
-                        v-model="colors[index]"
-                        :name="`color-${data?._id}`"
-                        class="!bg-transparent !text-black"
-                        type="text"
-                        :id="`${data._id}`"
-                        size="small"
-                        @keypress="handleKeypress"
-                        v-keyfilter.hex
-                      />
-                    </InputGroup>
-                    <Button
-                      label="Apply"
-                      size="small"
-                      type="submit"
-                      class="!bg-blue-500 !text-white hover:!bg-blue-400"
-                    />
-                  </div>
-                </form>
-              </Popover>
+              />
               <span class="w-full text-sm font-medium">{{ data?.name }}</span>
             </div>
             <div class="bg-primary mx-3 px-4 py-px rounded-md">
@@ -383,10 +360,11 @@ watch(
                   />
                 </svg>
               </span>
-              <span class="w-full text-sm font-medium">Add New List</span>
+              <span @click="toggleDialog" class="w-full text-sm font-medium">
+                Add New List
+              </span>
             </div>
           </div>
-          <!-- <hr class="my-4 border-gray-400/40 ml-2" /> -->
         </div>
         <div
           :class="
@@ -439,4 +417,10 @@ watch(
       </div>
     </div>
   </div>
+  <DialogActionList
+    v-model:visible="visibleDialogAction"
+    header="Create List"
+    :data="undefined"
+    @submit="createList"
+  />
 </template>
