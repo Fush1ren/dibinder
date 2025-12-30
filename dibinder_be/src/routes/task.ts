@@ -8,6 +8,28 @@ import List from "../schema/lists";
 
 const taskRouter = Router();
 
+/**
+ * @swagger
+ * /api/task:
+ *   get:
+ *     summary: Get all users
+ *     tags:
+ *       - Users
+ *     responses:
+ *       200:
+ *         description: List user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: number
+ *                   name:
+ *                     type: string
+ */
 const setDoneTask = (doneTask: boolean, doneSubTask: boolean | null): boolean | null => {
     let done = null;
 
@@ -35,62 +57,77 @@ const setDoneSubTask = (doneTask: boolean, subTask: { done: boolean; name: strin
     return data;
 }
 
-taskRouter.get('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
+taskRouter.get(
+  '/',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
     try {
-        const user = req?.user as UserRequest;
-        const query = req?.query as GetTaskQueryParams;
+      const user = req.user as UserRequest
+      const query = req.query as GetTaskQueryParams & { search?: string }
 
-        const startDateParams = query?.startDate  ? JSON.parse(query?.startDate as any) : null;
-        
-        let filter = {
-            user: user?.id,
-        } as {
-            user: string,
-            startDate: any;
+      const startDateParams = query.startDate
+        ? JSON.parse(query.startDate as any)
+        : null
+
+      /** filter dasar */
+      const filter: any = {
+        user: user.id,
+      }
+
+      /** filter date range */
+      if (startDateParams?.length === 2) {
+        filter.startDate = {
+          $gte: new Date(startDateParams[0]),
+          $lte: new Date(startDateParams[1]),
         }
-        
-        if (startDateParams?.length === 2) {
-            filter.startDate = {
-                $gte: new Date(startDateParams[0]),
-                $lte: new Date(startDateParams[1]),
-            }
+      }
+
+      /** filter search */
+      if (query.search && query.search.trim()) {
+        filter.name = {
+          $regex: query.search,
+          $options: 'i', // case-insensitive
         }
-        const sortBy = query.sort ? { createdAt: query.sort === "asc" ? 1 : -1 } : {};
+      }
 
-        // const task = await Tasks.find(filter).lean();
-        const task = await Tasks.find(filter).sort(sortBy as Record<string, SortOrder> | undefined).lean();
-        const data = await Promise.all(
-            task.map(async (d) => {
+      /** sorting */
+      const sortBy = query.sort
+        ? { createdAt: query.sort === 'asc' ? 1 : -1 }
+        : {}
 
-                const list = await List.find({
-                    _id: d?.list
-                });
+      const task = await Tasks.find(filter)
+        .sort(sortBy as Record<string, SortOrder>)
+        .lean()
 
-                return {
-                    ...d,
-                    list: list?.length > 0 ? {
-                        _id: list[0]?._id,
-                        name: list[0]?.name,
-                        color: list[0]?.color
-                    } : null,
+      const data = await Promise.all(
+        task.map(async (d) => {
+          const list = await List.findOne({ _id: d.list }).lean()
+
+          return {
+            ...d,
+            list: list
+              ? {
+                  _id: list._id,
+                  name: list.name,
+                  color: list.color,
                 }
-            })
-        )
-        // const task = await Tasks.find({
-        //     user: user?.id,
-        // }).lean();
+              : null,
+          }
+        })
+      )
 
-        res.status(200).json({
-            data: data,
-        });
+      res.status(200).json({
+        data,
+      })
     } catch (e) {
-        console.error(e)
-        res.status(500).json({
-            error: true,
-            message: (e as Error)?.message || "Failed to get task" 
-        });
+      console.error(e)
+      res.status(500).json({
+        error: true,
+        message: (e as Error).message || 'Failed to get task',
+      })
     }
-});
+  }
+)
 
 taskRouter.get('/length', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
@@ -113,6 +150,39 @@ taskRouter.get('/length', passport.authenticate('jwt', { session: false }), asyn
                 today: todayTask?.length,
                 all: task?.length,
             },
+        });
+    } catch (e) {
+        console.error(e)
+        res.status(500).json({
+            error: true,
+            message: (e as Error)?.message || "Failed to get task" 
+        });
+    }
+});
+
+taskRouter.get('/calendar', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    try {
+        const user = req?.user as UserRequest;
+        const tasks = await Tasks.find({
+            user: user.id,
+            $or: [
+                { startDate: { $ne: null } },
+                { dueDate: { $ne: null } },
+            ],
+        })
+        .select('_id name startDate dueDate')
+        .lean()
+
+        const events = tasks.map((task) => ({
+            _id: task._id.toString(),
+            name: task.name,
+            startDate: task.startDate ?? task.dueDate, // ⬅ WAJIB ADA
+            dueDate: task.dueDate ?? undefined,
+        }));
+
+
+        res.status(200).json({
+            data: events,
         });
     } catch (e) {
         console.error(e)

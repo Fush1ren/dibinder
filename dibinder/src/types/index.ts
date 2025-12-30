@@ -75,6 +75,10 @@ export interface ListByIdResponse {
     updatedAt: Date | string;
 }
 
+export interface ParamsSearch {
+    search?: string;
+}
+
 export interface ListDropdownResponse {
     _id: string;
     name: string;
@@ -101,14 +105,11 @@ export interface TasksResponse {
 }
 
 export type ButtonColorProps = {
-    // id: string;
-    // listColor: string;
-
     /**
      *  @default true
      */
     clickable: boolean;
-    data: {
+    data?: {
         id: string;
         name: string;
         color: string;
@@ -151,6 +152,11 @@ export interface BodyList{
     color: string | null;
 }
 
+export type ParamsGetList = ParamsSearch & {
+    sort?: string;
+    startDate?: any;
+}
+
 export interface CDialogProps {
     // modelValue: boolean;
     visible: boolean;
@@ -164,4 +170,11 @@ export interface CDialogEmits {
         name: string;
         colors: string;
     }]
+}
+
+export interface TaskCalendar {
+  _id: string
+  name: string
+  startDate: string
+  dueDate: string
 }

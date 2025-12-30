@@ -15,7 +15,6 @@ import {
 import {
   Button,
   Checkbox,
-  ConfirmDialog,
   DatePicker,
   Dialog,
   InputText,
@@ -24,7 +23,7 @@ import {
   useConfirm,
   useToast,
 } from 'primevue';
-import { ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 const sidebarStore = useSideBarStore();
@@ -52,6 +51,14 @@ const listTask = ref<ListDropdownResponse>();
 const listOptions = ref<ListDropdownResponse[]>();
 
 const dragIndex = ref<number | null>(null);
+
+onMounted(() => {
+  openSelect();
+});
+
+const listPath = computed(() => {
+  return route.fullPath?.includes('/binder/list');
+});
 
 function startDrag(index: number) {
   dragIndex.value = index;
@@ -162,7 +169,9 @@ const actionForm = async (e: FormSubmitEvent): Promise<void> => {
         name: e?.states?.task?.value,
         done: done as boolean,
         description: e?.states?.description?.value,
-        list: (e?.states?.list?.value as ListDropdownResponse)?._id,
+        list: listPath
+          ? (listTask.value?._id as string)
+          : (e?.states?.list?.value as ListDropdownResponse)?._id,
         startDate: dataDate.startDate
           ? new Date(dataDate.startDate?.toISOString())
           : null,
@@ -182,7 +191,9 @@ const actionForm = async (e: FormSubmitEvent): Promise<void> => {
         name: e?.states?.task?.value,
         done: false,
         description: e?.states?.description?.value,
-        list: (e?.states?.list?.value as ListDropdownResponse)?._id,
+        list: listPath
+          ? (listTask.value?._id as string)
+          : (e?.states?.list?.value as ListDropdownResponse)?._id,
         startDate: dataDate.startDate
           ? new Date(dataDate.startDate?.toISOString())
           : null,
@@ -314,26 +325,80 @@ const deleteTask = async (): Promise<void> => {
   }
 };
 
+// watch(
+//   () => taskDetailStore.task,
+//   () => {
+//     console.log('taskDetailStore.task', taskDetailStore.task?.list);
+//     name.value = taskDetailStore.task?.name;
+//     description.value = taskDetailStore.task?.description;
+//     if (taskDetailStore.task) {
+//       listTask.value = taskDetailStore.task?.list as ListDropdownResponse;
+//     }
+//     listOptions.value = listStore.listDropdown;
+//     startDate.value = taskDetailStore.task?.startDate
+//       ? new Date(taskDetailStore.task?.startDate)
+//       : null;
+//     dueDate.value = taskDetailStore.task?.dueDate
+//       ? new Date(taskDetailStore.task?.dueDate)
+//       : null;
+//     subTask.value = taskDetailStore.task?.subTask
+//       ? (taskDetailStore.task?.subTask?.map((i) => ({
+//           done: i?.done,
+//           name: i?.name,
+//         })) as { done: boolean; name: string }[])
+//       : [];
+//   },
+// );
+
+// watch(
+//   () => taskDetailStore.newTaskList,
+//   () => {
+//     console.log('taskDetailStore.newTaskList', taskDetailStore.newTaskList);
+//     listTask.value = {
+//       _id: taskDetailStore.newTaskList?._id as string,
+//       name: taskDetailStore.newTaskList?.name as string,
+//       color: taskDetailStore.newTaskList?.color as string,
+//     };
+//   },
+//   {
+//     immediate: true,
+//   },
+// );
+
 watch(
-  () => taskDetailStore.task,
-  () => {
-    name.value = taskDetailStore.task?.name;
-    description.value = taskDetailStore.task?.description;
-    listTask.value = taskDetailStore.task?.list as ListDropdownResponse;
-    listOptions.value = listStore.listDropdown;
-    startDate.value = taskDetailStore.task?.startDate
-      ? new Date(taskDetailStore.task?.startDate)
-      : null;
-    dueDate.value = taskDetailStore.task?.dueDate
-      ? new Date(taskDetailStore.task?.dueDate)
-      : null;
-    subTask.value = taskDetailStore.task?.subTask
-      ? (taskDetailStore.task?.subTask?.map((i) => ({
-          done: i?.done,
-          name: i?.name,
-        })) as { done: boolean; name: string }[])
-      : [];
+  () => ({
+    task: taskDetailStore.task,
+    newList: taskDetailStore.newTaskList,
+  }),
+  async ({ task, newList }) => {
+    // 🟢 EDIT MODE
+    await openSelect();
+    if (task) {
+      listTask.value = (task.list as ListDropdownResponse) ?? null;
+      name.value = task.name;
+      description.value = task.description;
+      startDate.value = task.startDate ? new Date(task.startDate) : null;
+      dueDate.value = task.dueDate ? new Date(task.dueDate) : null;
+      subTask.value = task.subTask ?? [];
+      return;
+    }
+
+    // 🟡 CREATE MODE
+    listTask.value = newList
+      ? ({
+          _id: newList?._id as string,
+          name: newList?.name as string,
+          color: newList?.color as string,
+        } as ListDropdownResponse)
+      : undefined;
+
+    name.value = '';
+    description.value = '';
+    startDate.value = null;
+    dueDate.value = null;
+    subTask.value = [];
   },
+  { immediate: true },
 );
 
 watch(
@@ -402,7 +467,6 @@ watch(
                 placeholder="Description"
                 fluid
               />
-
               <div class="flex items-center gap-12">
                 <span class="text-black text-normal font-medium">List</span>
                 <Select
@@ -411,6 +475,7 @@ watch(
                   placeholder="Select list"
                   option-label="name"
                   :options="listOptions"
+                  :disabled="listPath"
                   @show="openSelect"
                   size="small"
                   class="!bg-transparent"
@@ -693,5 +758,4 @@ watch(
       </div>
     </Form>
   </Dialog>
-  <ConfirmDialog />
 </template>

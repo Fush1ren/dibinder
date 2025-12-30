@@ -27,6 +27,7 @@ const routes: Readonly<RouteRecordRaw[]> = [
     {
         path: '/binder',
         name: 'binder',
+        redirect: '/binder/tasks/today',
         component: () => import('@/layouts/BinderLayout.vue'),
         meta: {
             requireAuth: true,
@@ -55,7 +56,7 @@ const routes: Readonly<RouteRecordRaw[]> = [
                 ]
             },
             {
-                path: 'list/:listName',
+                path: 'list/:listId',
                 name: 'listTask',
                 component: () => import('@/views/list/ListView.vue'),
             },

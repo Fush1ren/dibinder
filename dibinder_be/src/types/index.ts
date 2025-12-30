@@ -104,5 +104,6 @@ export type Task = {
 
 export type GetTaskQueryParams = {
     [key: string]: any;
-    createdAt: string[];
+    startDate: string[];
+    search: string;
 }

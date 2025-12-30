@@ -70,53 +70,64 @@ listRouter.get('/dropdown', passport.authenticate('jwt', { session: false }), as
     }
 })
 
-listRouter.get('/:id', passport.authenticate('jwt', { session: false }), async (req, res) => {
+listRouter.get(
+  '/:id',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
     try {
-        const user = req?.user as UserRequest;
-        const listId = (req?.params as {id: string})?.id as string
-        
-        const lists = await List.findOne({
-            _id: listId,
-            user: user?.id,
-        }).lean();
+      const user = req.user as UserRequest
+      const { id: listId } = req.params as { id: string }
+      const { search } = req.query as { search?: string }
 
-        if (!lists) {
-            return res.status(500).json({
-                error: true,
-                message: "List not found" 
-            });
-        }
+      const lists = await List.findOne({
+        _id: listId,
+        user: user.id,
+      }).lean()
 
-        const task = await Tasks.find({
-            user: user?.id,
-            list: lists._id,
+      if (!lists) {
+        return res.status(404).json({
+          error: true,
+          message: 'List not found',
         })
+      }
+
+      /** filter dasar task */
+      const taskFilter: any = {
+        user: user.id,
+        list: lists._id,
+      }
+
+      /** jika ada search */
+      if (search && search.trim()) {
+        taskFilter.name = {
+          $regex: search,
+          $options: 'i', // case-insensitive
+        }
+      }
+
+      const task = await Tasks.find(taskFilter)
         .sort('createdAt')
-        .lean();
+        .lean()
 
-        // return {
-        //     ...lists,
-        //     task: task?.length,
-        // };
-
-        res.status(200).json({
-            data: {
-                _id: lists?._id,
-                name: lists?.name,
-                color: lists?.color,
-                updatedAt: lists?.updatedAt,
-                createdAt: lists?.createdAt,
-                task
-            }
-        });
+      res.status(200).json({
+        data: {
+          _id: lists._id,
+          name: lists.name,
+          color: lists.color,
+          updatedAt: lists.updatedAt,
+          createdAt: lists.createdAt,
+          task,
+        },
+      })
     } catch (e) {
-        console.error(e)
-        res.status(500).json({
-            error: true,
-            message: (e as Error)?.message || "Failed to get list" 
-        });
+      console.error(e)
+      res.status(500).json({
+        error: true,
+        message: (e as Error).message || 'Failed to get list',
+      })
     }
-});
+  }
+)
 
 listRouter.post('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
@@ -184,6 +195,39 @@ listRouter.patch('/:id',  passport.authenticate('jwt', { session: false }), asyn
         res.status(500).json({ 
             error: true,
             message: (e as Error)?.message || "Failed to update list" 
+        });
+    }
+});
+
+listRouter.delete('/:id', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    try {
+        const listId = (req?.params as {id: string})?.id as string
+        const user = req?.user as UserRequest;
+
+        const list = await List.findOne({ _id: listId, user: user?.id });
+
+        if (!list) {
+            return res.status(404).json({
+                error: true,
+                message: 'List not found!',
+            });
+        }
+
+        await Tasks.updateMany(
+            { list: listId, user: user?.id },
+            { $set: { list: null } }
+        );
+
+        await List.deleteOne({ _id: listId });
+
+        return res.status(200).json({
+            message: 'List successfully deleted!',
+        });
+    } catch (e) {
+        console.error(e);
+        return res.status(500).json({
+            error: true,
+            message: (e as Error)?.message || "Failed to delete list" 
         });
     }
 });

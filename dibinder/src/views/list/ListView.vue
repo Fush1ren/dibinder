@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import DialogActionList from '@/components/DialogActionList.vue';
 import TaskDetail from '@/components/TaskDetail.vue';
 import {
   useListStore,
@@ -7,31 +6,71 @@ import {
   useTaskDetailStore,
   useTaskStore,
 } from '@/stores';
-import type { TasksResponse } from '@/types';
+import type { ParamsSearch, TasksResponse } from '@/types';
 import { formatDate } from '@/utils/data';
 import getElementStyle from '@/utils/styling';
-import { Checkbox, useToast } from 'primevue';
-import { onMounted, ref, watch } from 'vue';
+import { Checkbox, InputText, useConfirm, useToast } from 'primevue';
+import { ref, watch } from 'vue';
+import DialogFormList from '@/components/DialogFormList.vue';
+import { useRoute, useRouter } from 'vue-router';
 
 const listStore = useListStore();
 const sidebarStore = useSideBarStore();
 const taskStore = useTaskStore();
 const taskDetailStore = useTaskDetailStore();
 const toast = useToast();
+const confirm = useConfirm();
+const route = useRoute();
+const router = useRouter();
 
-onMounted(() => getList());
+// onMounted(async () => {
+//   const id = (route?.params as { listId: string })?.listId;
+//   // await getList();
+//   await getList(
+//     search.value
+//       ? {
+//           search: search.value,
+//         }
+//       : undefined,
+//     id,
+//   );
+// });
 
 const isDone = ref<boolean[]>([]);
-const isEditableName = ref<boolean>(false);
+const isEditable = ref<boolean>(false);
 const listName = ref<string>();
+// const menuSort = ref<InstanceType<typeof Menu>>();
+// const itemsMenu = ref<MenuItem[]>([
+//   {
+//     label: 'Task Name',
+//     icon: 'akar-icons:sort',
+//     command: () => {
+//       console.log('Task Name');
+//     },
+//   },
+// ]);
+const search = ref<string>('');
+const isShowSearch = ref<boolean>(false);
 
-const setEditAbleName = () => {
-  isEditableName.value = !isEditableName.value;
+const setEditAble = () => {
+  isEditable.value = !isEditable.value;
 };
 
-const closeEditableName = () => {
-  isEditableName.value = false;
-  listName.value = listStore.listActive?.name;
+// const closeEditableName = () => {
+//   isEditableName.value = false;
+//   listName.value = listStore.listActive?.name;
+// };
+
+const showSearch = () => {
+  isShowSearch.value = true;
+};
+
+const hideSearch = async (): Promise<void> => {
+  isShowSearch.value = false;
+  search.value = '';
+  await getList({
+    search: search.value,
+  });
 };
 
 const clickTask = (
@@ -58,20 +97,52 @@ const clickTask = (
   });
 };
 
-const getList = async () => {
+// const sortAction = (event: PointerEvent): void => {
+//   menuSort.value?.toggle(event);
+// };
+
+const confirmDelete = (e: PointerEvent) => {
+  e?.preventDefault();
+  e?.stopPropagation();
+  confirm.require({
+    message: 'Do you want to delete this list?',
+    header: listName.value,
+    icon: 'pi pi-info-circle',
+    rejectLabel: 'Cancel',
+    rejectProps: {
+      label: 'Cancel',
+      severity: 'secondary',
+      outlined: true,
+    },
+    acceptProps: {
+      label: 'Delete',
+      severity: 'danger',
+    },
+    accept: async () => {
+      await deleteList();
+    },
+  });
+};
+
+const getList = async (params?: ParamsSearch, id?: string) => {
   try {
-    await listStore.getListById(listStore.listActive?.id!);
+    await listStore.getListById(
+      id ?? (listStore.listActive?.id as string),
+      params ?? undefined,
+    );
+    listStore.listActive = {
+      id: listStore.list?._id as string,
+      name: listStore.list?.name as string,
+      color: listStore.list?.color as string,
+    };
     isDone.value = listStore.list?.task?.map((d) => d?.done) as boolean[];
-    // await listStore.getListById(listStorage?.listActive?.id!);
   } catch (e) {
     console.error(e);
   }
 };
 
 const setDone = async (e: boolean, data: TasksResponse): Promise<void> => {
-  // (isDone.value as boolean[])[index] = !isDone.value;
   try {
-    // console.log(e);
     const body = {
       done: e,
       subTask: data?.subTask as {
@@ -111,7 +182,7 @@ const updateList = async (e: {
       life: 3000,
     });
 
-    isEditableName.value = false;
+    isEditable.value = false;
   } catch (e) {
     toast.add({
       severity: 'error',
@@ -122,16 +193,72 @@ const updateList = async (e: {
   }
 };
 
+const deleteList = async (): Promise<void> => {
+  try {
+    await listStore.deleteList(listStore.listActive?.id as string);
+
+    toast.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: 'Delete List was successfuly!',
+      life: 3000,
+    });
+
+    await listStore.getList();
+
+    router.push('/binder/tasks/today');
+  } catch (e) {
+    toast.add({
+      severity: 'error',
+      summary: 'Failed',
+      detail: `${(e as Error)?.message}`,
+      life: 3000,
+    });
+  }
+};
+
+const searchName = async (): Promise<void> => {
+  try {
+    await getList(
+      search.value
+        ? {
+            search: search.value,
+          }
+        : undefined,
+    );
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+const throwPath = (newId?: string) => {
+  if (!newId) return;
+
+  const listIdArr = listStore.lists?.map((data) => data._id) ?? [];
+
+  if (listIdArr.includes(newId)) return;
+
+  router.push(`/binder/tasks/today`);
+};
+
 watch(
-  () => listStore.listActive,
-  async () => {
-    await getList();
-    closeEditableName();
-    listName.value = listStore.listActive?.name;
+  () => route?.params as { listId: string },
+  async (newId, oldId) => {
+    if (!newId || newId === oldId) return;
+    throwPath(newId?.listId as string);
+    isShowSearch.value = false;
+    search.value = '';
+
+    await getList(
+      search.value
+        ? {
+            search: search.value,
+          }
+        : undefined,
+      newId?.listId,
+    );
   },
-  {
-    immediate: true,
-  },
+  { immediate: true },
 );
 </script>
 
@@ -143,7 +270,7 @@ watch(
   >
     <div class="w-full h-screen">
       <div class="w-full h-full p-4">
-        <div class="h-[10%]">
+        <div class="h-[5%]">
           <div class="flex gap-2">
             <div class="flex items-start gap-2">
               <h1 class="text-3xl font-bold pb-4">
@@ -151,7 +278,7 @@ watch(
                 {{ listStore.list?.name }}
               </h1>
               <span
-                @click="setEditAbleName"
+                @click="setEditAble"
                 class="hover:text-gray-400 cursor-pointer pb-4"
               >
                 <svg
@@ -169,18 +296,122 @@ watch(
             </div>
           </div>
         </div>
-
-        <div class="w-full h-[90%] flex flex-col pt-4">
+        <div class="flex justify-end">
+          <div class="flex gap-2">
+            <!-- <div>
+              <button
+                @click="sortAction"
+                :outlined="true"
+                type="button"
+                class="p-1 border border-black rounded-lg cursor-pointer"
+              >
+                <span class="!text-black">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-width="2"
+                      d="M3 6h18M6 12h12m-9 6h6"
+                    />
+                  </svg>
+                </span>
+              </button>
+              <Menu
+                ref="menuSort"
+                id="overlay_menu"
+                :model="itemsMenu"
+                :popup="true"
+              >
+                <template #item="{ item }">
+                  <div class="flex items-center">
+                    <Icon v-if="item.icon" :icon="item.icon" />
+                    <span>{{ item.label }}</span>
+                  </div>
+                </template>
+              </Menu>
+            </div> -->
+            <div v-if="isShowSearch" class="flex items-center gap-2">
+              <span @click="hideSearch" class="text-red-500 cursor-pointer">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    fill="currentColor"
+                    d="M6.4 19L5 17.6l5.6-5.6L5 6.4L6.4 5l5.6 5.6L17.6 5L19 6.4L13.4 12l5.6 5.6l-1.4 1.4l-5.6-5.6z"
+                  />
+                </svg>
+              </span>
+              <InputText
+                v-model="search"
+                name="search"
+                class="!bg-transparent !text-black"
+                type="text"
+                placeholder="Search task"
+                size="small"
+                fluid
+                @keyup.enter="searchName"
+              />
+            </div>
+            <button
+              v-else-if="!isShowSearch"
+              @click="showSearch"
+              class="p-2 border border-black rounded-lg cursor-pointer"
+            >
+              <span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    fill="currentColor"
+                    d="m19.6 21l-6.3-6.3q-.75.6-1.725.95T9.5 16q-2.725 0-4.612-1.888T3 9.5t1.888-4.612T9.5 3t4.613 1.888T16 9.5q0 1.1-.35 2.075T14.7 13.3l6.3 6.3zM9.5 14q1.875 0 3.188-1.312T14 9.5t-1.312-3.187T9.5 5T6.313 6.313T5 9.5t1.313 3.188T9.5 14"
+                  />
+                </svg>
+              </span>
+            </button>
+            <button
+              @click.stop="confirmDelete"
+              type="button"
+              class="p-2 border border-black rounded-lg cursor-pointer"
+            >
+              <span class="text-red-500">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    fill="currentColor"
+                    d="m9.4 16.5l2.6-2.6l2.6 2.6l1.4-1.4l-2.6-2.6L16 9.9l-1.4-1.4l-2.6 2.6l-2.6-2.6L8 9.9l2.6 2.6L8 15.1zM7 21q-.825 0-1.412-.587T5 19V6H4V4h5V3h6v1h5v2h-1v13q0 .825-.587 1.413T17 21zM17 6H7v13h10zM7 6v13z"
+                  />
+                </svg>
+              </span>
+            </button>
+          </div>
+        </div>
+        <div class="w-full h-[95%] flex flex-col py-4">
           <div
-            @click="taskDetailStore.triggerAddNewTask()"
+            @click="taskDetailStore.triggerAddNewTask(listStore.list)"
             class="w-full border border-gray-300 rounded-lg p-4 cursor-pointer"
           >
             <div class="flex flex-row items-center gap-4">
               <span>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
+                  width="24"
+                  height="24"
                   viewBox="0 0 24 24"
                 >
                   <path
@@ -267,8 +498,8 @@ watch(
     </div>
   </div>
   <TaskDetail />
-  <DialogActionList
-    v-model:visible="isEditableName"
+  <DialogFormList
+    v-model:visible="isEditable"
     :header="`Edit List - ${listStore?.list?.name}`"
     :data="listStore?.list"
     @submit="updateList"
