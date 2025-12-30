@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router';
 import Toast from 'primevue/toast';
 import NavBar from './components/NavBar.vue';
 import type { RouteMeta } from './types';
+import { ConfirmDialog } from 'primevue';
 
 const r = useRoute();
 
@@ -16,4 +17,5 @@ const meta = computed((): RouteMeta => {
   <NavBar v-if="meta?.useNavbar" />
   <router-view />
   <Toast />
+  <ConfirmDialog />
 </template>

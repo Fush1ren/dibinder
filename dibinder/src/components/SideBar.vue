@@ -16,7 +16,7 @@ import { onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import ButtonColor from './ButtonColor.vue';
 import getElementStyle from '@/utils/styling';
-import DialogActionList from './DialogActionList.vue';
+import DialogFormList from './DialogFormList.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -78,9 +78,11 @@ const setListActive = (data: ListResponse) => {
   listStore.setListActive({
     id: data?._id,
     name: data?.name,
+    color: data?.color as string,
   });
 
-  router.push(`/binder/list/${listStore.listActive?.name?.toLowerCase()}`);
+  router.push(`/binder/list/${listStore.listActive?.id}`);
+  // router.push(`/binder/list/${listStore.listActive?.name?.toLowerCase()}`);
 };
 
 const getDataList = async (): Promise<void> => {
@@ -417,7 +419,7 @@ watch(
       </div>
     </div>
   </div>
-  <DialogActionList
+  <DialogFormList
     v-model:visible="visibleDialogAction"
     header="Create List"
     :data="undefined"

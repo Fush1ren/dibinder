@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from "cors";
+import swaggerUi from "swagger-ui-express";
+import swaggerSpec from "./config/swagger";
 import config from './config';
 import passport from 'passport';
 import authRouter from './routes/auth';
@@ -24,6 +26,22 @@ app.use(express.json());
 app.use(express.urlencoded({
     extended: true
 }));
+
+if (config.APP_MODE !== "production") {
+  app.use(
+    "/api-docs",
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerSpec)
+  );
+}
+
+// Swagger UI
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec)
+);
+
 
 app.use(passport.initialize());
 

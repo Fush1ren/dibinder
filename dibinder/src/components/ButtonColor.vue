@@ -60,7 +60,7 @@ const updateColor = (e?: PointerEvent | Event): void => {
     event: e as PointerEvent | Event,
     data: {
       id: props?.data?.id,
-      name: props?.data?.name,
+      name: props?.data?.name as string,
       color: colors.value,
     },
   });

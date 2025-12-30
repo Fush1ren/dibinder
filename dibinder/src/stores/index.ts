@@ -1,4 +1,4 @@
-import type { BodyList, BodyTask, ListByIdResponse, ListDropdownResponse, ListResponse , ResponseAPI, TaskLengthResponse, TasksResponse } from "@/types";
+import type { BodyList, BodyTask, ListByIdResponse, ListDropdownResponse, ListResponse , ParamsGetList, ParamsSearch, ResponseAPI, TaskCalendar, TaskLengthResponse, TasksResponse } from "@/types";
 import { api } from "@/utils/axios";
 import type { AxiosResponse } from "axios";
 import { defineStore } from "pinia";
@@ -82,6 +82,7 @@ export const useListStore = defineStore('list', () => {
   const listActive = ref<{
     id: string;
     name: string;
+    color: string | null;
   }>();
   const list = ref<ListByIdResponse>();
   const listDropdown = ref<ListDropdownResponse[]>();
@@ -89,6 +90,7 @@ export const useListStore = defineStore('list', () => {
   function setListActive(data: ({
     id: string;
     name: string;
+    color: string | null;
   })) {
     listActive.value = data;
   }
@@ -102,8 +104,8 @@ export const useListStore = defineStore('list', () => {
     lists.value = data.data;
   }
 
-  async function getListById(id: string): Promise<void> {
-    const { data }  = await api.get(`/list/${id}`) as AxiosResponse<ResponseAPI<ListByIdResponse>>;
+  async function getListById(id: string, params?: ParamsSearch): Promise<void> {
+    const { data }  = await api.get(`/list/${id}`, { params }) as AxiosResponse<ResponseAPI<ListByIdResponse>>;
     list.value = data.data;
   }
 
@@ -120,6 +122,10 @@ export const useListStore = defineStore('list', () => {
     await api.patch(`/list/${id}`, body);
   }
 
+  async function deleteList(id: string): Promise<void>{
+    await api.delete(`/list/${id}`);
+  }
+
   return {
     list,
     lists,
@@ -132,6 +138,7 @@ export const useListStore = defineStore('list', () => {
     getListById,
     createList,
     updateList,
+    deleteList,
   }
 }, {
     persist: {
@@ -144,8 +151,9 @@ export const useTaskStore = defineStore('task', () => {
   const tasks = ref<TasksResponse[]>();
   const tasksLength = ref<TaskLengthResponse>();
   const taskDone = ref<boolean[]>([]);
+  const tasksCalendar = ref<TaskCalendar[]>([]);
 
-  async function getTasks(params?: any){
+  async function getTasks(params?: ParamsGetList){
     const { data } = await api.get('/task', { params }) as AxiosResponse<ResponseAPI<TasksResponse[]>>;
 
     tasks.value = data.data;
@@ -163,6 +171,11 @@ export const useTaskStore = defineStore('task', () => {
   async function getTaskLength() {
     const { data } = await api.get('/task/length') as AxiosResponse<ResponseAPI<TaskLengthResponse>>;
     tasksLength.value = data.data;
+  }
+
+  async function getTaskCalendar() {
+    const { data } = await api.get('/task/calendar') as AxiosResponse<ResponseAPI<TaskCalendar[]>>;
+    tasksCalendar.value = data.data
   }
 
   async function createTask(body: BodyTask) {
@@ -185,8 +198,10 @@ export const useTaskStore = defineStore('task', () => {
     tasks,
     tasksLength,
     taskDone,
+    tasksCalendar,
     getTasks,
     getTaskLength,
+    getTaskCalendar,
     updateTask,
     updateTaskDone,
     createTask,
@@ -210,13 +225,24 @@ export const useSideBarStore = defineStore('sideBar', () => {
 export const useTaskDetailStore = defineStore('taskDetail', () => {
   const isOpen = ref<boolean>(false);
   const task = ref<TasksResponse>();
+  const newTaskList = ref<{
+    _id: string;
+    name: string;
+    color: string | null;
+  }>();
 
   function triggerTaskDetail(){
     isOpen.value = !isOpen.value;
   }
 
-  function triggerAddNewTask() {
+  function triggerAddNewTask(data?: {
+    _id: string;
+    name: string;
+    color: string | null;
+  }) {
     clearTask()
+    newTaskList.value = data;
+    
     isOpen.value = true;
   }
 
@@ -225,18 +251,21 @@ export const useTaskDetailStore = defineStore('taskDetail', () => {
   }
 
   function triggerEditTask(data: TasksResponse) {
+    clearTask()
     task.value = data;
     isOpen.value = true;
   }
 
   function clearTask() {
     task.value = undefined;
+    newTaskList.value = undefined;
   }
 
 
   return {
     isOpen,
     task,
+    newTaskList,
     triggerTaskDetail,
     triggerAddNewTask,
     closeTaskDetail,

@@ -124,8 +124,11 @@ const getTask = async () => {
                   <!-- List Name -->
                   <div class="flex items-center gap-2" v-if="val?.list">
                     <ButtonColor
-                      :id="val?.list?._id"
-                      :listColor="val?.list?.color as string"
+                      :data="{
+                        id: val?.list?._id,
+                        name: val?.list?.name,
+                        color: val?.list?.color as string,
+                      }"
                       :clickable="false"
                     />
                     <span>{{ val?.list?.name }}</span>
