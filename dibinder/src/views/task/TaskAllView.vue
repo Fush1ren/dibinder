@@ -111,7 +111,9 @@ watch(
 </script>
 
 <template>
-  <div class="w-full h-screen">
+  <div
+    class="w-full h-screen bg-bg-light dark:bg-bg-dark text-slate-900 dark:text-white"
+  >
     <div class="w-full h-full p-4">
       <div class="h-[5%]">
         <h1 class="text-3xl font-bold pb-4">
@@ -148,7 +150,7 @@ watch(
           <button
             v-else-if="!isShowSearch"
             @click="showSearch"
-            class="p-2 border border-black rounded-lg cursor-pointer"
+            class="p-2 border border-black dark:border-white rounded-lg cursor-pointer"
           >
             <span>
               <svg
@@ -200,7 +202,7 @@ watch(
                 :key="i"
                 v-model="(isDone as boolean[])[i]"
                 :pt="{
-                  box: '!bg-transparent !border-black !border-2 !rounded-sm',
+                  box: '!bg-transparent !border-black dark:!border-white !border-2 !rounded-sm',
                   icon: '!text-white !w-3 !h-3',
                 }"
                 binary
@@ -208,10 +210,10 @@ watch(
                 @update:model-value="setDone(!!$event, val)"
               />
               <div class="flex flex-col w-full">
-                <span class="text-gray-800 font-medium">{{ val?.name }}</span>
+                <span class="font-medium">{{ val?.name }}</span>
                 <div
                   v-if="val?.dueDate || val?.list || val?.subTask"
-                  class="flex items-center gap-4 text-sm text-gray-600 mt-1"
+                  class="flex items-center gap-4 text-sm text-[#92a4c9] mt-1"
                 >
                   <!-- Date -->
                   <div v-if="val?.dueDate" class="flex items-center gap-2">

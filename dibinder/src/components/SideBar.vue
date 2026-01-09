@@ -17,6 +17,7 @@ import { useRoute, useRouter } from 'vue-router';
 import ButtonColor from './ButtonColor.vue';
 import getElementStyle from '@/utils/styling';
 import DialogFormList from './DialogFormList.vue';
+import UserSetting from './UserSetting.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -34,6 +35,7 @@ const emits = defineEmits<{
 const taskMenu = ref<SideBarTaskList[]>();
 const loadingListData = ref<boolean>(false);
 const visibleDialogAction = ref<boolean>(false);
+const isShowUserSetting = ref<boolean>(false);
 
 onMounted(() => {
   setTaskMenu();
@@ -47,6 +49,10 @@ const setRoute = (path: string): void => {
 
 const toggleDialog = (): void => {
   visibleDialogAction.value = !visibleDialogAction.value;
+};
+
+const showUserSetting = (): void => {
+  isShowUserSetting.value = !isShowUserSetting.value;
 };
 
 const setTaskMenu = (): void => {
@@ -225,7 +231,7 @@ watch(
             Hi, {{ props?.username }}!
           </h2>
           <span
-            class="cursor-pointer hover:bg-gray-300/50 rounded-md p-2"
+            class="cursor-pointer hover:bg-gray-300/50 rounded-md p-2 text-white"
             @click="toggleSideBar"
           >
             <svg
@@ -248,7 +254,7 @@ watch(
           "
         >
           <div class="w-full pb-2">
-            <span class="text-black text-normal font-bold">TASKS</span>
+            <span class="text-white text-normal font-bold">TASKS</span>
           </div>
           <div
             :key="index"
@@ -257,7 +263,7 @@ watch(
             @click="setRoute(data?.link)"
           >
             <div class="w-full flex flex-row items-center py-2">
-              <span class="px-2">
+              <span class="px-2 text-[#92a4c9]">
                 <svg
                   v-if="data?.name === 'Today'"
                   xmlns="http://www.w3.org/2000/svg"
@@ -295,7 +301,7 @@ watch(
                   />
                 </svg>
               </span>
-              <span class="w-full text-sm font-medium">
+              <span class="w-full text-sm font-medium text-[#92a4c9]">
                 {{ data?.name }}
               </span>
             </div>
@@ -321,7 +327,7 @@ watch(
           "
         >
           <div class="w-full pb-2">
-            <span class="text-black text-normal font-bold">LIST</span>
+            <span class="text-white text-normal font-bold">LIST</span>
           </div>
           <div
             :key="index"
@@ -339,14 +345,16 @@ watch(
                   color: data?.color,
                 }"
               />
-              <span class="w-full text-sm font-medium">{{ data?.name }}</span>
+              <span class="w-full text-sm font-medium text-[#92a4c9]">{{
+                data?.name
+              }}</span>
             </div>
             <div class="bg-primary mx-3 px-4 py-px rounded-md">
               <span class="font-bold text-sm">{{ data?.task ?? 0 }}</span>
             </div>
           </div>
           <div
-            class="flex items-center cursor-pointer rounded-md mx-2 my-1 py-1"
+            class="flex items-center cursor-pointer text-[#92a4c9] rounded-md mx-2 my-1 py-1"
           >
             <div class="w-full flex flex-row items-center py-2">
               <span class="ml-[12px] mr-[10px]">
@@ -374,9 +382,12 @@ watch(
               .sideBarMiniMenu
           "
         >
-          <div class="flex flex-col w-full gap-2 mb-3 mx-1">
+          <div class="text-[#92a4c9] flex flex-col w-full gap-2 mb-3 mx-1">
             <div class="flex items-center cursor-pointer rounded-md mx-2">
-              <div class="w-full flex flex-row items-center py-2">
+              <div
+                @click="showUserSetting"
+                class="w-full flex flex-row items-center py-2"
+              >
                 <span class="px-2">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -386,11 +397,11 @@ watch(
                   >
                     <path
                       fill="currentColor"
-                      d="m9.25 22l-.4-3.2q-.325-.125-.612-.3t-.563-.375L4.7 19.375l-2.75-4.75l2.575-1.95Q4.5 12.5 4.5 12.338v-.675q0-.163.025-.338L1.95 9.375l2.75-4.75l2.975 1.25q.275-.2.575-.375t.6-.3l.4-3.2h5.5l.4 3.2q.325.125.613.3t.562.375l2.975-1.25l2.75 4.75l-2.575 1.95q.025.175.025.338v.674q0 .163-.05.338l2.575 1.95l-2.75 4.75l-2.95-1.25q-.275.2-.575.375t-.6.3l-.4 3.2zm2.8-6.5q1.45 0 2.475-1.025T15.55 12t-1.025-2.475T12.05 8.5q-1.475 0-2.488 1.025T8.55 12t1.013 2.475T12.05 15.5"
+                      d="m16 21l-.3-1.5q-.3-.125-.562-.262T14.6 18.9l-1.45.45l-1-1.7l1.15-1q-.05-.35-.05-.65t.05-.65l-1.15-1l1-1.7l1.45.45q.275-.2.538-.337t.562-.263L16 11h2l.3 1.5q.3.125.563.275t.537.375l1.45-.5l1 1.75l-1.15 1q.05.3.05.625t-.05.625l1.15 1l-1 1.7l-1.45-.45q-.275.2-.537.338t-.563.262L18 21zM2 20v-2.8q0-.825.425-1.55t1.175-1.1q1.275-.65 2.875-1.1T10 13h.35q.15 0 .3.05q-.725 1.8-.6 3.575T11.25 20zm15-2q.825 0 1.413-.587T19 16t-.587-1.412T17 14t-1.412.588T15 16t.588 1.413T17 18m-7-6q-1.65 0-2.825-1.175T6 8t1.175-2.825T10 4t2.825 1.175T14 8t-1.175 2.825T10 12"
                     />
                   </svg>
                 </span>
-                <span class="w-full text-sm font-medium"> Settings </span>
+                <span class="w-full text-sm font-medium"> User Setting </span>
               </div>
             </div>
             <div
@@ -425,4 +436,5 @@ watch(
     :data="undefined"
     @submit="createList"
   />
+  <UserSetting v-model:visible="isShowUserSetting" />
 </template>

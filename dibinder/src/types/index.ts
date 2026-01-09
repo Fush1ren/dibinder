@@ -158,7 +158,6 @@ export type ParamsGetList = ParamsSearch & {
 }
 
 export interface CDialogProps {
-    // modelValue: boolean;
     visible: boolean;
     header: string;
     data?: ListByIdResponse | undefined;
@@ -177,4 +176,21 @@ export interface TaskCalendar {
   name: string
   startDate: string
   dueDate: string
+}
+
+export interface User {
+    _id: string;
+    name: string;
+    email: string;
+    photoUrl?: string | null;
+}
+
+export interface BodyUpdateProfile {
+    name: string;
+    email: string;
+    photoUrl: string;
+}
+
+export interface UserSettingEmits {
+    'close': [payload: boolean]
 }

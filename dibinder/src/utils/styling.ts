@@ -1,9 +1,10 @@
 function getElementStyle(sideBarActive: boolean, taskDetailActive: boolean) {
     return {
         sideBarElement: `text-dark ${sideBarActive ? 'w-[25%] h-screen' : 'w-[4%] h-fit'}`,
-        sideBarBackground: `h-full  ${sideBarActive ? 'bg-secondary' : 'bg-transparent'} rounded-e-xl flex flex-col`,
+        sideBarBackground: `h-full  ${sideBarActive ? 'bg-bg-light dark:bg-bg-dark' : 'bg-transparent'} border-r border-slate-800/50 shrink-0 flex flex-col`,
+        // sideBarBackground: `h-full  ${sideBarActive ? 'bg-secondary' : 'bg-transparent'} rounded-e-xl flex flex-col`,
         sideBarContainer: `w-full flex flex-row justify-between items-center ${sideBarActive ? 'p-4' : 'px-2 py-4'}`,
-        sideBarTextUsername: `text-xl font-bold ${sideBarActive ? 'block' : 'hidden'}`,
+        sideBarTextUsername: `text-xl text-white font-bold ${sideBarActive ? 'block' : 'hidden'}`,
         sideBarTaskList: ` mx-4 ${sideBarActive ? 'block border-b border-b-gray-400/40' : 'hidden'}`,
         sideBarList: `mx-4 py-2 ${sideBarActive ? 'block border-b border-b-gray-400/40 ' : 'hidden'}`,
         sideBarMiniMenu: `w-full h-full items-end ${sideBarActive ? 'grid' : 'hidden'}`,

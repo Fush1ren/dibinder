@@ -371,7 +371,7 @@ watch(
     newList: taskDetailStore.newTaskList,
   }),
   async ({ task, newList }) => {
-    // 🟢 EDIT MODE
+    // EDIT
     await openSelect();
     if (task) {
       listTask.value = (task.list as ListDropdownResponse) ?? null;
@@ -383,7 +383,7 @@ watch(
       return;
     }
 
-    // 🟡 CREATE MODE
+    // CREATE
     listTask.value = newList
       ? ({
           _id: newList?._id as string,
