@@ -32,13 +32,39 @@ userRouter.get('/', passport.authenticate('jwt', { session: false }), async (req
     }
 });
 
+userRouter.get('/:id', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    try {
+        const param = (req?.params as {id: string})
+
+        const userData = await Users.findById(param?.id).lean();
+
+        if (!userData) {
+            return res.status(401).json({
+                error: true,
+                message: 'User is not Found.'
+            });
+        }
+
+        const { password, ...data } = userData;
+
+        res.status(200).json({
+            data
+        });
+    } catch (e) {
+        res.status(500).json({
+            error: true,
+            message: (e as ErrorCatch)?.message || "Failed to get profile user"
+        });
+    }
+});
+
 userRouter.patch('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const user = req?.user as UserRequest;
 
         const body = req.body as UserData;
 
-        if (!body?.name && !body?.email && !body?.photoUrl) {
+        if (!body?.name && !body?.email) {
             return res.status(400).json({
                 error: true,
                 message: 'User Data cannot be empty!'
@@ -68,8 +94,11 @@ userRouter.patch('/', passport.authenticate('jwt', { session: false }), async (r
         }
 
         res.status(200).json({
-            data: doc
+            message: 'Update user was successfully'
         });
+        // res.status(200).json({
+        //     data: doc
+        // });
         
     } catch (e) {
         res

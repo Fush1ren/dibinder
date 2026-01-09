@@ -1,4 +1,4 @@
-import type { BodyList, BodyTask, ListByIdResponse, ListDropdownResponse, ListResponse , ParamsGetList, ParamsSearch, ResponseAPI, TaskCalendar, TaskLengthResponse, TasksResponse } from "@/types";
+import type { BodyList, BodyTask, BodyUpdateProfile, ListByIdResponse, ListDropdownResponse, ListResponse , ParamsGetList, ParamsSearch, ResponseAPI, TaskCalendar, TaskLengthResponse, TasksResponse, User } from "@/types";
 import { api } from "@/utils/axios";
 import type { AxiosResponse } from "axios";
 import { defineStore } from "pinia";
@@ -49,7 +49,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     async function fetchUser() {
       try {
-        const { data } = await api.get("/user");
+        const { data } = await api.get("/user")as AxiosResponse<User>;
         userId.value = data._id;
         userName.value = data.name;
         userPhotoUrl.value = data.photoUrl;
@@ -271,5 +271,24 @@ export const useTaskDetailStore = defineStore('taskDetail', () => {
     closeTaskDetail,
     triggerEditTask,
     clearTask,
+  }
+})
+
+export const useUserStore = defineStore('user', () => {
+  const user = ref<User>();
+
+  async function getUser(id: string){
+    const { data } = await api.get(`/user/${id}`,) as AxiosResponse<ResponseAPI<User>>;
+    user.value = data.data;
+  }
+
+  async function updateUser(body: BodyUpdateProfile) {
+    await api.patch('/user', body);
+  }
+  
+  return {
+    user,
+    getUser,
+    updateUser,
   }
 })
